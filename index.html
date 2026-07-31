@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Medical interpretor and AI Assistant</title>
+    <!-- Tailwind CSS for UI Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid.js for Pathway Flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background-color: #111112;
+            color: #64b5e4;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #243b75;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #044ec7;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1352ab;
+        }
+        .glow-active {
+            filter: drop-shadow(0 0 12px rgba(242, 243, 245, 0.75));
+        }
+        /* Cinematic Slow-Motion Intro Overlay Animations */
+        #intro-overlay {
+            transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1), transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .slow-pulse {
+            animation: slowPulse 3s infinite ease-in-out;
+        }
+        @keyframes slowPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.98); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+    </style>
+    
+    </script>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- CINEMATIC SLOW-MOTION DRAMA INTRO / APP OPENING SCREEN -->
+    <div id="intro-overlay" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center select-none">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(14,116,144,0.15)_0%,transparent_70%)] pointer-events-none"></div>
+        <div class="relative z-10 max-w-xl flex flex-col items-center">
+            <!-- Simulated Dramatic Lab Opening Pic/Badge -->
+            <div class="w-24 h-24 rounded-full border border-sky-500/40 bg-sky-950/30 flex items-center justify-center mb-6 slow-pulse shadow-[0_0_50px_rgba(14,116,144,0.3)]">
+                <svg class="w-12 h-12 text-sky-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+            </div>
+            <span class="text-[10px] font-mono tracking-[0.3em] text-sky-400 mb-2 uppercase">Biochemistry insides  </span>
+            <h2 class="text-3xl font-black text-white tracking-widest uppercase mb-4">BIOCHEM INTERPRETOR</h2>
+            <p class="text-xs text-gray-400 max-w-md leading-relaxed mb-8">Establishing diagnostic channel</p>
+            
+            <!-- Slow Progress Bar -->
+            <div class="w-64 h-1 bg-gray-900 rounded-full overflow-hidden mb-8 border border-gray-800">
+                <div id="intro-progress" class="h-full bg-gradient-to-r from-sky-600 to-emerald-400 w-0 transition-all duration-[3000ms] ease-out"></div>
+            </div>
+
+            <button onclick="dismissIntro()" class="px-6 py-2 bg-sky-600 hover:bg-sky-500 text-white font-mono text-xs rounded font-bold tracking-widest uppercase transition-all shadow-lg shadow-sky-900/50">
+                ENTER LAB WORKSPACE
+            </button>
+        </div>
+    </div>
+
+    <!-- HEADER BAR WITH GLOBAL SEARCH -->
+    <header class="bg-gray-950 border-b border-sky-950 px-6 py-3 flex justify-between items-center z-10 shrink-0">
+        <div>
+            <h1 class="text-xl font-black tracking-wider text-sky-400 uppercase">BIOCHEM INTERPRETOR</h1>
+            <p class="text-[10px] text-gray-400">Interactive Map, Biomarker Diagnostics, Pathway Flowcharts, & QA Assistant</p>
+        </div>
+        <!-- GLOBAL SEARCH BAR -->
+        <div class="flex items-center gap-3">
+            <div class="relative w-64">
+                <input type="text" id="global-search-input" oninput="handleGlobalSearch(this.value)" placeholder="Search organs, drugs, diseases..." class="w-full bg-gray-900 border border-gray-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500 placeholder-gray-500">
+                <div id="global-search-results" class="absolute left-0 right-0 top-full mt-1 bg-gray-900 border border-gray-800 rounded-lg shadow-xl max-h-48 overflow-y-auto hidden z-50"></div>
+            </div>
+            <div class="flex gap-2">
+                
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- LEFT PANEL: THE LABELED 2D DIAGRAM CANVAS (40% width) -->
+        <section class="w-[40%] bg-gray-950/40 p-5 flex flex-col justify-between border-r border-gray-900 relative">
+            <div class="absolute top-4 left-4 z-10">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-widest block">Visuals</span>
+                <span class="text-lg font-bold text-sky-400" id="current-viewport-title">Anatomical Organs</span>
+            </div>
+
+            <!-- TAB CONTROLS FOR VISUALS -->
+            <div class="absolute top-4 right-4 z-10 flex gap-1 bg-gray-900 p-1 rounded-lg border border-gray-800">
+                <button onclick="switchVisual('organs')" id="btn-vis-organs" class="px-2.5 py-1 text-xs font-bold rounded bg-sky-600 text-white transition-all">Organs</button>
+                <button onclick="switchVisual('organelles')" id="btn-vis-organelles" class="px-2.5 py-1 text-xs font-bold rounded text-gray-400 hover:text-white transition-all">Organelles</button>
+                <button onclick="switchVisual('biochem')" id="btn-vis-biochem" class="px-2.5 py-1 text-xs font-bold rounded text-gray-400 hover:text-white transition-all">Bio Chemicals</button>
+            </div>
+
+            <!-- ILLUSTRATION HOUSING -->
+            <div class="flex-1 flex items-center justify-center relative py-6">
+                
+                <!-- 1. ORGANS DIAGRAM (SVG) -->
+                <svg id="svg-organs" class="w-full h-[360px] transition-all duration-300" viewBox="0 0 400 550" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M200,30 C220,30 230,45 230,65 C230,85 220,100 200,100 C180,100 170,85 170,65 C170,45 180,30 200,30 Z" fill="#111827" stroke="#1f2937" stroke-width="2" />
+                    <path d="M200,100 C150,110 130,130 110,180 C95,220 90,300 90,360 L120,360 C120,280 130,220 140,180 L140,480 L175,480 L185,300 L200,300 L215,300 L225,480 L260,480 L260,180 C270,220 280,280 280,360 L310,360 C310,300 305,220 290,180 C270,130 250,110 200,100 Z" fill="#111827" stroke="#1f2937" stroke-width="2" />
+
+                    <!-- Brain -->
+                    <g id="svg-part-brain" class="cursor-pointer group" onclick="selectItem('brain', 'organs')">
+                        <path d="M185,45 C185,38 215,38 215,45 C222,48 222,62 215,65 C210,68 190,68 185,65 C178,62 178,48 185,45 Z" fill="#ec4899" opacity="0.8" stroke="#f472b6" stroke-width="1.5" />
+                        <line x1="215" y1="52" x2="270" y2="45" stroke="#f472b6" stroke-dasharray="3" />
+                        <text x="275" y="48" fill="#f472b6" class="text-[10px] font-mono font-bold">BRAIN</text>
+                    </g>
+                    <!-- Thyroid -->
+                    <g id="svg-part-thyroid" class="cursor-pointer group" onclick="selectItem('thyroid', 'organs')">
+                        <path d="M194,102 Q200,98 206,102 Q209,109 200,112 Q191,109 194,102 Z" fill="#a855f7" opacity="0.8" stroke="#c084fc" stroke-width="1" />
+                        <line x1="206" y1="105" x2="270" y2="100" stroke="#c084fc" stroke-dasharray="3" />
+                        <text x="275" y="103" fill="#c084fc" class="text-[10px] font-mono font-bold">THYROID</text>
+                    </g>
+                    <!-- Lungs -->
+                    <g id="svg-part-lungs" class="cursor-pointer group" onclick="selectItem('lungs', 'organs')">
+                        <path d="M165,135 C150,140 150,190 175,195 C182,195 182,145 165,135 Z" fill="#06b6d4" opacity="0.75" stroke="#22d3ee" stroke-width="1.5" />
+                        <path d="M235,135 C250,140 250,190 225,195 C218,195 218,145 235,135 Z" fill="#06b6d4" opacity="0.75" stroke="#22d3ee" stroke-width="1.5" />
+                        <line x1="155" y1="160" x2="70" y2="150" stroke="#22d3ee" stroke-dasharray="3" />
+                        <text x="25" y="153" fill="#22d3ee" class="text-[10px] font-mono font-bold">LUNGS</text>
+                    </g>
+                    <!-- Heart -->
+                    <g id="svg-part-heart" class="cursor-pointer group" onclick="selectItem('heart', 'organs')">
+                        <path d="M190,150 Q200,140 210,155 Q200,175 190,165 Z" fill="#ef4444" opacity="0.85" stroke="#f87171" stroke-width="1.5" />
+                        <line x1="210" y1="160" x2="270" y2="160" stroke="#f87171" stroke-dasharray="3" />
+                        <text x="275" y="163" fill="#f87171" class="text-[10px] font-mono font-bold">HEART</text>
+                    </g>
+                    <!-- Liver -->
+                    <g id="svg-part-liver" class="cursor-pointer group" onclick="selectItem('liver', 'organs')">
+                        <path d="M165,205 L210,200 L205,220 L170,222 Z" fill="#10b981" opacity="0.8" stroke="#34d399" stroke-width="1.5" />
+                        <line x1="170" y1="215" x2="70" y2="210" stroke="#34d399" stroke-dasharray="3" />
+                        <text x="25" y="213" fill="#34d399" class="text-[10px] font-mono font-bold">LIVER</text>
+                    </g>
+                    <!-- Stomach -->
+                    <g id="svg-part-stomach" class="cursor-pointer group" onclick="selectItem('stomach', 'organs')">
+                        <path d="M205,208 C225,202 235,215 225,230 C215,240 200,225 205,208 Z" fill="#f59e0b" opacity="0.8" stroke="#fbbf24" stroke-width="1.5" />
+                        <line x1="225" y1="222" x2="270" y2="220" stroke="#fbbf24" stroke-dasharray="3" />
+                        <text x="275" y="223" fill="#fbbf24" class="text-[10px] font-mono font-bold">STOMACH</text>
+                    </g>
+                    <!-- Kidneys -->
+                    <g id="svg-part-kidneys" class="cursor-pointer group" onclick="selectItem('kidneys', 'organs')">
+                        <ellipse cx="180" cy="245" rx="6" ry="10" fill="#6366f1" opacity="0.8" stroke="#818cf8" stroke-width="1.2" />
+                        <ellipse cx="220" cy="245" rx="6" ry="10" fill="#6366f1" opacity="0.8" stroke="#818cf8" stroke-width="1.2" />
+                        <line x1="175" y1="245" x2="70" y2="265" stroke="#818cf8" stroke-dasharray="3" />
+                        <text x="25" y="268" fill="#818cf8" class="text-[10px] font-mono font-bold">KIDNEYS</text>
+                    </g>
+                    <!-- Intestines -->
+                    <g id="svg-part-intestines" class="cursor-pointer group" onclick="selectItem('intestines', 'organs')">
+                        <rect x="180" y="255" width="40" height="35" rx="10" fill="#e11d48" opacity="0.75" stroke="#fb7185" stroke-width="1.5" />
+                        <path d="M185,260 H215 M185,270 H215 M185,280 H215" stroke="#9f1239" stroke-width="2" />
+                        <line x1="220" y1="275" x2="270" y2="285" stroke="#fb7185" stroke-dasharray="3" />
+                        <text x="275" y="288" fill="#fb7185" class="text-[10px] font-mono font-bold">INTESTINES</text>
+                    </g>
+                    <!-- Pancreas -->
+                    <g id="svg-part-pancreas" class="cursor-pointer group" onclick="selectItem('pancreas', 'organs')">
+                        <path d="M185,230 Q200,225 215,233" stroke="#f43f5e" stroke-width="4" stroke-linecap="round" opacity="0.9" />
+                        <line x1="185" y1="230" x2="70" y2="315" stroke="#f43f5e" stroke-dasharray="3" />
+                        <text x="25" y="318" fill="#f43f5e" class="text-[10px] font-mono font-bold">PANCREAS</text>
+                    </g>
+                    <!-- Spleen -->
+                    <g id="svg-part-spleen" class="cursor-pointer group" onclick="selectItem('spleen', 'organs')">
+                        <path d="M228,225 C233,222 238,232 232,238 Z" fill="#0284c7" opacity="0.85" stroke="#38bdf8" stroke-width="1.2" />
+                        <line x1="235" y1="232" x2="270" y2="340" stroke="#38bdf8" stroke-dasharray="3" />
+                        <text x="275" y="343" fill="#38bdf8" class="text-[10px] font-mono font-bold">SPLEEN</text>
+                    </g>
+                </svg>
+
+                <!-- 2. ORGANELLES DIAGRAM (SVG) -->
+                <svg id="svg-organelles" class="w-full h-[360px] hidden transition-all duration-300" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="200" cy="200" r="160" fill="#030712" stroke="#4b5563" stroke-width="3" stroke-dasharray="4 4" />
+                    <!-- Nucleus -->
+                    <g id="svg-part-nucleus" class="cursor-pointer" onclick="selectItem('nucleus', 'organelles')">
+                        <circle cx="200" cy="200" r="50" fill="#1e1b4b" stroke="#6366f1" stroke-width="2" />
+                        <circle cx="190" cy="195" r="18" fill="#312e81" stroke="#818cf8" stroke-width="1.5" />
+                        <line x1="190" y1="195" x2="310" y2="150" stroke="#818cf8" stroke-dasharray="3" />
+                        <text x="315" y="153" fill="#818cf8" class="text-[10px] font-mono font-bold">NUCLEUS</text>
+                    </g>
+                    <!-- Mitochondria -->
+                    <g id="svg-part-mitochondria" class="cursor-pointer" onclick="selectItem('mitochondria', 'organelles')">
+                        <rect x="80" y="160" width="45" height="25" rx="12" transform="rotate(-15, 102, 172)" fill="#7c2d12" stroke="#ea580c" stroke-width="2" />
+                        <line x1="80" y1="170" x2="30" y2="170" stroke="#ea580c" stroke-dasharray="3" />
+                        <text x="35" y="173" fill="#ea580c" class="text-[10px] font-mono font-bold">MITOCHONDRIA</text>
+                    </g>
+                    <!-- Ribosomes -->
+                    <g id="svg-part-ribosomes" class="cursor-pointer" onclick="selectItem('ribosomes', 'organelles')">
+                        <circle cx="120" cy="110" r="3" fill="#fbbf24" />
+                        <circle cx="128" cy="104" r="3" fill="#fbbf24" />
+                        <line x1="128" y1="104" x2="30" y2="105" stroke="#fbbf24" stroke-dasharray="3" />
+                        <text x="35" y="108" fill="#fbbf24" class="text-[10px] font-mono font-bold">RIBOSOMES</text>
+                    </g>
+                    <!-- Endoplasmic Reticulum -->
+                    <g id="svg-part-er" class="cursor-pointer" onclick="selectItem('er', 'organelles')">
+                        <path d="M250,180 Q280,190 260,210 T290,240 T260,270" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round" />
+                        <line x1="285" y1="210" x2="310" y2="210" stroke="#10b981" stroke-dasharray="3" />
+                        <text x="315" y="213" fill="#10b981" class="text-[10px] font-mono font-bold">ENDOPLASMIC RETICULUM</text>
+                    </g>
+                    <!-- Golgi -->
+                    <g id="svg-part-golgi" class="cursor-pointer" onclick="selectItem('golgi', 'organelles')">
+                        <path d="M160,280 Q190,290 220,280 M150,295 Q190,310 230,295" stroke="#ec4899" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                        <line x1="190" y1="310" x2="310" y2="310" stroke="#ec4899" stroke-dasharray="3" />
+                        <text x="315" y="313" fill="#ec4899" class="text-[10px] font-mono font-bold">GOLGI APPARATUS</text>
+                    </g>
+                    <!-- Lysosomes -->
+                    <g id="svg-part-lysosomes" class="cursor-pointer" onclick="selectItem('lysosomes', 'organelles')">
+                        <circle cx="280" cy="110" r="10" fill="#06b6d4" stroke="#22d3ee" stroke-width="1.5" />
+                        <line x1="280" y1="110" x2="310" y2="75" stroke="#22d3ee" stroke-dasharray="3" />
+                        <text x="315" y="78" fill="#22d3ee" class="text-[10px] font-mono font-bold">LYSOSOMES</text>
+                    </g>
+                </svg>
+
+                <!-- 3. BIO-CHEMICALS (SVG) -->
+                <svg id="svg-biochem" class="w-full h-[360px] hidden transition-all duration-300" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="translate(110, 110)" class="cursor-pointer" id="svg-part-vitamins" onclick="switchCategory('vitamins')">
+                        <polygon points="50,15 85,35 85,75 50,95 15,75 15,35" fill="#1e293b" stroke="#e2e8f0" stroke-width="2" />
+                        <text x="25" y="60" fill="#e2e8f0" class="text-[10px] font-mono font-bold">VITAMINS</text>
+                    </g>
+                    <g transform="translate(100, 260)" class="cursor-pointer" id="svg-part-molecules" onclick="switchCategory('molecules')">
+                        <path d="M 0,20 Q 30,0 60,20 T 120,20 T 180,20" fill="none" stroke="#6366f1" stroke-width="2" />
+                        <text x="40" y="-15" fill="#10b981" class="text-[10px] font-mono font-bold">MOLECULES & ATP</text>
+                    </g>
+                </svg>
+
+            </div>
+
+            <!-- EMBEDDED DIAGNOSTIC LAB CALCULATOR -->
+            <div class="p-3 bg-gray-950 border border-gray-900 rounded-lg shrink-0">
+                <div class="flex justify-between items-center mb-1.5">
+                    <span class="text-[10px] font-mono font-bold text-amber-400 uppercase">BIOMARKER LAB CALCULATOR</span>
+                    <button onclick="runLabDiagnostic()" class="px-2 py-0.5 text-[9px] bg-amber-600 hover:bg-amber-500 text-white font-mono rounded font-bold">ANALYZE LABS</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[9px] text-gray-400 block font-mono">Blood Glucose (mg/dL)</label>
+                        <input type="number" id="lab-glucose" value="95" class="w-full bg-gray-900 border border-gray-800 rounded px-2 py-1 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-gray-400 block font-mono">Serum Creatinine (mg/dL)</label>
+                        <input type="number" step="0.1" id="lab-creatinine" value="0.9" class="w-full bg-gray-900 border border-gray-800 rounded px-2 py-1 text-xs text-white">
+                    </div>
+                </div>
+                <div id="lab-result-output" class="mt-2 text-[10px] text-gray-300 font-mono hidden bg-gray-900 p-1.5 rounded border border-gray-800"></div>
+            </div>
+        </section>
+
+        <!-- MIDDLE PANEL: DATA INDEX & SPEC SHEETS WITH EXPORT TOOL (35% width) -->
+        <section class="w-[35%] flex flex-col border-r border-gray-900 overflow-hidden bg-gray-950">
+            <!-- CATEGORY SELECTOR TABS -->
+            <div class="grid grid-cols-4 border-b border-gray-900 shrink-0 bg-gray-950/80">
+                <button onclick="switchCategory('organs')" id="tab-organs" class="py-3 text-[10px] font-bold tracking-wider text-sky-400 border-b-2 border-sky-500 bg-sky-950/20">ORGANS</button>
+                <button onclick="switchCategory('organelles')" id="tab-organelles" class="py-3 text-[10px] font-bold tracking-wider text-gray-400 border-b-2 border-transparent hover:text-gray-200">ORGANELLES</button>
+                <button onclick="switchCategory('vitamins')" id="tab-vitamins" class="py-3 text-[10px] font-bold tracking-wider text-gray-400 border-b-2 border-transparent hover:text-gray-200">VITAMINS</button>
+                <button onclick="switchCategory('molecules')" id="tab-molecules" class="py-3 text-[10px] font-bold tracking-wider text-gray-400 border-b-2 border-transparent hover:text-gray-200">MOLECULES</button>
+            </div>
+
+            <!-- SUB-INDEX GRID -->
+            <div class="h-[25%] border-b border-gray-900 overflow-y-auto p-3 flex flex-col gap-1 bg-gray-950/20 shrink-0" id="item-list-container">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- SPEC SHEET DETAILS PANEL WITH EXPORT BUTTONS -->
+            <div class="flex-1 p-5 overflow-y-auto bg-gray-950/80 flex flex-col justify-between" id="spec-panel">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: INTERACTIVE AI Q&A ASSISTANT (25% width) -->
+        <section class="w-[25%] flex flex-col bg-gray-950 border-l border-gray-900 overflow-hidden">
+            <div class="p-4 border-b border-gray-900 shrink-0 bg-gray-900/20">
+                <h2 class="text-sm font-black text-white uppercase tracking-widest"> QA ASSISTANT</h2>
+                <p class="text-[10px] text-amber-500 font-mono">Select biological inquiries below</p>
+            </div>
+
+            <!-- CHAT FEED -->
+            <div class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 min-h-0" id="chat-feed">
+                <div class="flex flex-col gap-1 bg-sky-950/10 border border-sky-900/30 p-2.5 rounded-lg text-xs">
+                    <span class="font-mono font-bold text-emerald-500 uppercase text-[9px]">BIOCENTRIC AI</span>
+                    <p class="text-gray-300 leading-relaxed">Welcome Analyst. Select any question below or query custom biological pathways and biomarkers.</p>
+                </div>
+            </div>
+
+            <!-- QUICK QUESTIONS INVENTORY -->
+            <div class="p-3 bg-gray-950 border-t border-b border-gray-900 shrink-0 flex flex-col h-[200px]">
+                <span class="text-[9px] text-amber-500 font-mono uppercase block mb-2 font-bold tracking-wider">QUICK DIAGNOSTIC QUERIES</span>
+                <div class="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1" id="questions-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- CHAT INPUT -->
+            <div class="p-3 bg-gray-950 shrink-0">
+                
+        </section>
+
+    </main>
+
+    <!-- SYSTEM DATA & LOGIC ENGINE -->
+    <script>
+        const database = {
+"organs": {
+        "brain": {
+            "name": "The Brain",
+            "system": "Central Nervous System",
+            "formula": "100 Billion Neurons",
+            "function": "Primary control center of the nervous system. Processes sensory data, directs motor functions, regulates homeostasis, and coordinates cognitive processes.",
+            "deficiency": "Cognitive decline, memory loss, sensory processing dysfunction.",
+            "sources": "Requires continuous glucose metabolism, oxygen, and omega-3 fatty acids.",
+            "disease": "Alzheimer's Disease & Cerebral Ischemia",
+            "pathway": "Amyloid-beta peptide aggregation & hyperphosphorylated tau accumulation synaptic disruption.",
+            "mermaidCode": "graph TD\n    A[Amyloid-beta Accumulation] --> B[Synaptic Disruption]\n    B --> C[Neuroinflammation]\n    C --> D[Cognitive Decline]",
+            "drugs": "Donepezil & Memantine",
+            "drugAction": "Donepezil inhibits acetylcholinesterase to increase synaptic acetylcholine. Memantine blocks pathological NMDA receptor overactivation."
+        },
+        "thyroid": {
+            "name": "Thyroid Gland",
+            "system": "Endocrine System",
+            "formula": "Thyroxine (T4) & Triiodothyronine (T3)",
+            "function": "Synthesizes hormones regulating cellular metabolism rates, protein synthesis, body temperature, and systemic energy balance.",
+            "deficiency": "Hypothyroidism (fatigue, weight gain) or Hyperthyroidism (weight loss, rapid heartbeat).",
+            "sources": "Requires dietary iodine intake and selenium.",
+            "disease": "Hashimoto's Thyroiditis",
+            "pathway": "Autoimmune destruction of thyroid follicles by T-lymphocytes & anti-TPO antibodies.",
+            "mermaidCode": "graph TD\n    A[Autoimmune Attack] --> B[Follicular Destruction]\n    B --> C[Deficient T3/T4 Synthesis]\n    C --> D[Systemic Hypothyroidism]",
+            "drugs": "Levothyroxine",
+            "drugAction": "Synthetic T4 analog converted peripherally to active T3 to normalize metabolic rate."
+        },
+        "lungs": {
+            "name": "The Lungs",
+            "system": "Respiratory System",
+            "formula": "700 Million Alveolar Units",
+            "function": "Performs gas exchange by extracting molecular oxygen into pulmonary capillaries and expelling waste carbon dioxide.",
+            "deficiency": "Hypoxia, respiratory acidosis, hypercapnia.",
+            "sources": "Atmospheric oxygen and nitrogen balance.",
+            "disease": "Asthma & COPD",
+            "pathway": "Chronic airway inflammation, T-cell activation, mast cell degranulation, and smooth muscle bronchoconstriction.",
+            "mermaidCode": "graph TD\n    A[Allergen Trigger] --> B[Mast Cell Degranulation]\n    B --> C[Bronchospasm & Edema]\n    C --> D[Airway Obstruction]",
+            "drugs": "Albuterol & Fluticasone",
+            "drugAction": "Albuterol is a selective beta-2 agonist relaxing bronchial muscle; Fluticasone suppresses NF-kB inflammation."
+        },
+        "heart": {
+            "name": "The Heart",
+            "system": "Cardiovascular System",
+            "formula": "Myocardial Muscle Tissue",
+            "function": "Propels systemic blood flow throughout the vascular loop to supply oxygen, hormones, and glucose.",
+            "deficiency": "Cardiac arrest, tissue ischemia, and organ failure.",
+            "sources": "Coronary perfusion and high energy substrates.",
+            "disease": "Congestive Heart Failure",
+            "pathway": "RAAS activation, systemic vasoconstriction, cardiomyocyte hypertrophy, and progressive pump failure.",
+            "mermaidCode": "graph TD\n    A[Pressure Overload] --> B[RAAS Activation]\n    B --> C[Cardiomyocyte Hypertrophy]\n    C --> D[Heart Failure]",
+            "drugs": "Lisinopril & Metoprolol",
+            "drugAction": "Lisinopril is an ACE inhibitor lowering resistance; Metoprolol is a beta-blocker reducing myocardial oxygen demand."
+        },
+        "liver": {
+            "name": "The Liver",
+            "system": "Digestive and Metabolic System",
+            "formula": "500+ Enzymatic Reactions",
+            "function": "Primary biochemical refinery. Detoxifies metabolites, synthesizes plasma proteins, stores glycogen, and produces bile.",
+            "deficiency": "Jaundice, toxic buildup, hepatic encephalopathy.",
+            "sources": "Amino acids, micronutrients, and glutathione antioxidants.",
+            "disease": "Non-Alcoholic Fatty Liver Disease (NAFLD)",
+            "pathway": "Insulin resistance increases free fatty acid flux, lipid peroxidation, and hepatic stellate cell activation.",
+            "mermaidCode": "graph TD\n    A[Insulin Resistance] --> B[Hepatic Lipid Accumulation]\n    B --> C[Lipotoxicity & ROS]\n    C --> D[Fibrogenesis]",
+            "drugs": "Pioglitazone",
+            "drugAction": "PPAR-gamma agonist improving peripheral insulin sensitivity and reducing hepatic fat accumulation."
+        },
+        "stomach": {
+            "name": "The Stomach",
+            "system": "Digestive System",
+            "formula": "Hydrochloric Acid (HCl)",
+            "function": "Synthesizes gastric juices and pepsin to break down food, digest proteins, and eliminate pathogens.",
+            "deficiency": "Malabsorption (Vitamin B12), acid reflux, and ulcers.",
+            "sources": "Water, sodium chloride, and protective mucous secretions.",
+            "disease": "Peptic Ulcer Disease & GERD",
+            "pathway": "Imbalance between aggressive gastric acid/pepsin and defensive mucosal-bicarbonate barriers.",
+            "mermaidCode": "graph TD\n    A[Acid/Pepsin Overload] --> B[Mucosal Barrier Breakdown]\n    B --> C[Epithelial Erosion]\n    C --> D[Ulceration]",
+            "drugs": "Omeprazole & Famotidine",
+            "drugAction": "Omeprazole is a Proton Pump Inhibitor irreversibly halting gastric acid secretion."
+        },
+        "kidneys": {
+            "name": "The Kidneys",
+            "system": "Urinary & Osmoregulatory",
+            "formula": "1 Million Nephrons",
+            "function": "Filters urea and creatinine from blood while regulating electrolyte levels, blood volume, and pressure.",
+            "deficiency": "Uremia, fluid overload, hyperkalemia, and metabolic acidosis.",
+            "sources": "Daily hydration and balanced electrolyte intake.",
+            "disease": "Chronic Kidney Disease",
+            "pathway": "Glomerular hyperfiltration, podocyte effacement, mesangial expansion, and tubulointerstitial fibrosis.",
+            "mermaidCode": "graph TD\n    A[Glomerular Hypertension] --> B[Podocyte Effacement]\n    B --> C[Tubulointerstitial Fibrosis]\n    C --> D[Renal Failure]",
+            "drugs": "Furosemide & Losartan",
+            "drugAction": "Furosemide is a loop diuretic promoting water excretion; Losartan blocks AT1 receptors to lower pressure."
+        },
+        "small_intestine": {
+            "name": "Small Intestine",
+            "system": "Gastrointestinal System",
+            "formula": "Villi & Microvilli Absorptive Matrix",
+            "function": "Extracts 90% of dietary nutrients and water via extensive mucosal surface area.",
+            "deficiency": "Malnutrition, malabsorption syndromes, and severe weight loss.",
+            "sources": "Balanced diet rich in macronutrients and micronutrients.",
+            "disease": "Celiac Disease",
+            "pathway": "Gluten ingestion triggering an immune reaction that flattens mucosal villi and halts nutrient absorption.",
+            "mermaidCode": "graph TD\n    A[Gluten Exposure] --> B[T-Cell Mediated Enteropathy]\n    B --> C[Villus Atrophy]\n    C --> D[Nutrient Malabsorption]",
+            "drugs": "Gluten-Free Diet & Corticosteroids",
+            "drugAction": "Gluten-free diet removes the trigger; corticosteroids suppress severe mucosal inflammation."
+        },
+        "large_intestine": {
+            "name": "Large Intestine (Colon)",
+            "system": "Gastrointestinal System",
+            "formula": "Microbial Fermentation & Water Reabsorption",
+            "function": "Reabsorbs remaining fluids and electrolytes, and compacts indigestible waste materials into feces.",
+            "deficiency": "Dehydration, electrolyte imbalances, and severe diarrhea or constipation.",
+            "sources": "Dietary fiber, water, and prebiotics for gut flora.",
+            "disease": "Ulcerative Colitis & Colon Cancer",
+            "pathway": "Chronic mucosal inflammation of the colon or unchecked epithelial cell mutation forming adenomas and carcinomas.",
+            "mermaidCode": "graph TD\n    A[Immune/Genetic Trigger] --> B[Colonic Mucosal Inflammation]\n    B --> C[Crypt Abscesses]\n    C --> D[Epithelial Ulceration]",
+            "drugs": "Mesalamine & Infliximab",
+            "drugAction": "Mesalamine reduces local inflammation in the colonic wall; Infliximab blocks TNF-alpha."
+        },
+        "pancreas": {
+            "name": "The Pancreas",
+            "system": "Endocrine & Digestive",
+            "formula": "Islets of Langerhans & Acinar Tissue",
+            "function": "Secretes insulin and glucagon to regulate blood glucose and produces digestive lipases and amylases.",
+            "deficiency": "Diabetes mellitus, pancreatic insufficiency, and fat malabsorption.",
+            "sources": "Steady amino acid availability for peptide synthesis.",
+            "disease": "Type 2 Diabetes Mellitus",
+            "pathway": "Insulin resistance forces beta-cell hypersecretion, leading to ER stress, beta-cell exhaustion, and hyperglycemia.",
+            "mermaidCode": "graph TD\n    A[Insulin Resistance] --> B[Beta-Cell Hypersecretion]\n    B --> C[ER Stress & Exhaustion]\n    C --> D[Hyperglycemia]",
+            "drugs": "Metformin & Empagliflozin",
+            "drugAction": "Metformin decreases hepatic gluconeogenesis; Empagliflozin blocks SGLT2 renal glucose reabsorption."
+        },
+        "spleen": {
+            "name": "The Spleen",
+            "system": "Lymphatic & Immune",
+            "formula": "Red and White Pulp Matrix",
+            "function": "Filters blood, destroys old erythrocytes, recycles iron, and houses lymphocyte reservoirs.",
+            "deficiency": "Infection susceptibility and altered platelet counts.",
+            "sources": "Healthy hematopoiesis and iron recycling.",
+            "disease": "Autoimmune Hemolytic Anemia",
+            "pathway": "IgG opsonization of red blood cells leading to accelerated splenic macrophage phagocytosis.",
+            "mermaidCode": "graph TD\n    A[IgG Opsonization] --> B[Macrophage Recognition]\n    B --> C[Erythrocyte Phagocytosis]\n    C --> D[Hemolytic Anemia]",
+            "drugs": "Prednisone & IVIG",
+            "drugAction": "Prednisone suppresses inflammatory transcription; IVIG saturates splenic macrophage Fc receptors."
+        },
+        "skin": {
+            "name": "The Skin",
+            "system": "Integumentary System",
+            "formula": "Epidermis, Dermis, & Hypodermis Matrix",
+            "function": "Acts as a primary physical barrier against pathogens, ultraviolet radiation, and mechanical injury; regulates body temperature and synthesis of Vitamin D.",
+            "deficiency": "Vulnerability to infection, thermal dysregulation, and ultraviolet vulnerability.",
+            "sources": "Water, essential fatty acids, and sunlight exposure for Vitamin D synthesis.",
+            "disease": "Psoriasis",
+            "pathway": "Autoimmune activation of T-cells releasing cytokines (IL-17, TNF-alpha) driving rapid keratinocyte proliferation and plaque formation.",
+            "mermaidCode": "graph TD\n    A[T-Cell Activation] --> B[Cytokine Release IL-17]\n    B --> C[Keratinocyte Hyperproliferation]\n    C --> D[Plaque Formation]",
+            "drugs": "Adalimumab & Calcipotriene",
+            "drugAction": "Adalimumab blocks TNF-alpha to reduce inflammation; Calcipotriene is a vitamin D analog regulating cell growth."
+        },
+        "adrenals": {
+            "name": "Adrenal Glands",
+            "system": "Endocrine System",
+            "formula": "Cortex (Cortisol/Aldosterone) & Medulla (Epinephrine)",
+            "function": "Mediates the body's acute and chronic stress response, regulates blood pressure, electrolyte balance, and metabolic pathways.",
+            "deficiency": "Addison's disease, severe fatigue, hypotension, and electrolyte imbalance.",
+            "sources": "Cholesterol precursors, sodium intake, and adequate rest cycles.",
+            "disease": "Addison's Disease",
+            "pathway": "Autoimmune destruction of the adrenal cortex leading to cortisol and aldosterone deficiency.",
+            "mermaidCode": "graph TD\n    A[Autoimmune Destruction] --> B[Adrenocortical Atrophy]\n    B --> C[Loss of Cortisol & Aldosterone]\n    C --> D[Adrenal Crisis]",
+            "drugs": "Hydrocortisone & Fludrocortisone",
+            "drugAction": "Hydrocortisone replaces deficient cortisol; Fludrocortisone acts as a mineralocorticoid to manage sodium and water retention."
+        },
+        "gallbladder": {
+            "name": "Gallbladder",
+            "system": "Digestive System",
+            "formula": "Bile Storage & Concentration Reservoir",
+            "function": "Stores and concentrates hepatic bile, releasing it into the duodenum to emulsify and digest dietary fats.",
+            "deficiency": "Fat malabsorption, steatorrhea, and deficiency in fat-soluble vitamins (A, D, E, K).",
+            "sources": "Healthy lipid intake and regular dietary stimulus for contraction.",
+            "disease": "Cholelithiasis & Cholecystitis",
+            "pathway": "Bile supersaturation with cholesterol, crystal nucleation, duct obstruction, and secondary bacterial infection.",
+            "mermaidCode": "graph TD\n    A[Bile Supersaturation] --> B[Crystal Nucleation]\n    B --> C[Duct Obstruction]\n    C --> D[Acute Inflammation]",
+            "drugs": "Ursodiol & Ketorolac",
+            "drugAction": "Ursodiol dissolves cholesterol gallstones; Ketorolac manages biliary colic pain via anti-inflammatory action."
+        },
+        "bladder": {
+            "name": "Urinary Bladder",
+            "system": "Urinary System",
+            "formula": "Detrusor Muscle & Transitional Epithelium",
+            "function": "Collects and stores urine excreted by the kidneys prior to voluntary disposal via urination.",
+            "deficiency": "Urinary incontinence, retention, or neurogenic bladder dysfunction.",
+            "sources": "Adequate daily hydration and pelvic floor muscle tone.",
+            "disease": "Interstitial Cystitis & Bladder Cancer",
+            "pathway": "Urothelial barrier breakdown, mast cell activation, sensory nerve upregulation, and chronic pelvic pain.",
+            "mermaidCode": "graph TD\n    A[Urothelial Leakage] --> B[Solute Penetration]\n    B --> C[Mast Cell Activation]\n    C --> D[Chronic Inflammation]",
+            "drugs": "Oxybutynin & Pentosan Polysulfate",
+            "drugAction": "Oxybutynin relaxes bladder smooth muscle via anticholinergic action; Pentosan restores the mucosal protective layer."
+        },
+        "thymus": {
+            "name": "Thymus Gland",
+            "system": "Lymphatic & Immune System",
+            "formula": "Lymphoepithelial T-Cell Maturation Center",
+            "function": "Facilitates the maturation and differentiation of naive T-lymphocytes into immunocompetent T-cells.",
+            "deficiency": "Severe immunodeficiency and vulnerability to opportunistic infections.",
+            "sources": "Zinc, amino acids, and adequate endocrine signaling.",
+            "disease": "DiGeorge Syndrome & Myasthenia Gravis",
+            "pathway": "Genetic microdeletion or thymic hyperplasia leading to T-cell deficiency or autoimmune receptor destruction.",
+            "mermaidCode": "graph TD\n    A[Thymic Dysfunction] --> B[Impaired T-Cell Selection]\n    B --> C[Autoreactive T-Cell Escape]\n    C --> D[Autoimmunity]",
+            "drugs": "Pyridostigmine & Immunoglobulins",
+            "drugAction": "Pyridostigmine increases acetylcholine availability at neuromuscular junctions; Immunoglobulins modulate immune response."
+        },
+        "pituitary": {
+            "name": "Pituitary Gland",
+            "system": "Endocrine System",
+            "formula": "Master Gland (Adenohypophysis & Neurohypophysis)",
+            "function": "Secretes critical tropic hormones controlling thyroid, adrenal, growth, reproductive functions, and water balance.",
+            "deficiency": "Panhypopituitarism, growth failure, diabetes insipidus, and secondary endocrine losses.",
+            "sources": "Blood perfusion via hypophyseal portal system and hypothalamic releasing factors.",
+            "disease": "Pituitary Adenoma & Acromegaly",
+            "pathway": "Monoclonal expansion of anterior pituitary cells leading to hormone hypersecretion and optic chiasm compression.",
+            "mermaidCode": "graph TD\n    A[Cellular Mutation] --> B[Adenoma Growth]\n    B --> C[Hormone Overproduction]\n    C --> D[Compression of Surrounding Structures]",
+            "drugs": "Bromocriptine & Octreotide",
+            "drugAction": "Bromocriptine activates dopamine receptors to shrink prolactinomas; Octreotide mimics somatostatin to inhibit growth hormone."
+        },
+        "pineal": {
+            "name": "Pineal Gland",
+            "system": "Endocrine System",
+            "formula": "Melatonin Biosynthetic Hub",
+            "function": "Synthesizes and secretes melatonin in response to dark-light cycles to regulate circadian rhythms and sleep architecture.",
+            "deficiency": "Sleep-wake cycle disruption, insomnia, and circadian rhythm disorders.",
+            "sources": "Tryptophan amino acid precursor and darkness exposure.",
+            "disease": "Pineal Parenchymal Tumors & Circadian Insomnia",
+            "pathway": "Suprachiasmatic nucleus signaling failure resulting in suppressed nocturnal melatonin production.",
+            "mermaidCode": "graph TD\n    A[Light Exposure at Night] --> B[SCN Suppression]\n    B --> C[Melatonin Inhibition]\n    C --> D[Sleep Disruption]",
+            "drugs": "Melatonin & Ramelteon",
+            "drugAction": "Melatonin and Ramelteon bind MT1/MT2 receptors to promote sleep onset."
+        },
+        "esophagus": {
+            "name": "Esophagus",
+            "system": "Digestive System",
+            "formula": "Muscular Peristaltic Tube",
+            "function": "Transports chewed food and liquids from the pharynx down to the stomach via coordinated peristaltic muscle contractions.",
+            "deficiency": "Dysphagia, odynophagia, and aspiration risk.",
+            "sources": "Coordinated neuromuscular innervation and hydration.",
+            "disease": "Gastroesophageal Reflux Disease & Achalasia",
+            "pathway": "Lower esophageal sphincter relaxation failure or acid burn leading to mucosal inflammation and strictures.",
+            "mermaidCode": "graph TD\n    A[LES Dysfunction] --> B[Acid Exposure]\n    B --> C[Epithelial Metaplasia Barrett's]\n    C --> D[Malignant Transformation Risk]",
+            "drugs": "Esomeprazole & Metoclopramide",
+            "drugAction": "Esomeprazole reduces acid production; Metoclopramide enhances esophageal peristalsis and LES tone."
+        },
+        "hypothalamus": {
+            "name": "Hypothalamus",
+            "system": "Nervous & Endocrine System",
+            "formula": "Neurosecretory Control Center",
+            "function": "Links the nervous system to the endocrine system via the pituitary gland; regulates body temperature, hunger, thirst, and fatigue.",
+            "deficiency": "Thermal dysregulation, endocrine disorders, appetite imbalance, and diabetes insipidus.",
+            "sources": "Proper neural signaling, balanced hydration, and nutrient status.",
+            "disease": "Hypothalamic Obesity & Prader-Willi Syndrome",
+            "pathway": "Genetic or acquired signaling disruption in leptin-melanocortin pathway causing uncontrolled hyperphagia.",
+            "mermaidCode": "graph TD\n    A[Leptin Receptor Defect] --> B[Satiety Signaling Failure]\n    B --> C[Uncontrolled Hyperphagia]\n    C --> D[Severe Obesity]",
+            "drugs": "Setmelanotide",
+            "drugAction": "Setmelanotide activates the MC4 receptor in the hypothalamus to restore satiety pathways."
+        },
+        "salivary_glands": {
+            "name": "Salivary Glands",
+            "system": "Digestive System",
+            "formula": "Parotid, Submandibular, & Sublingual Acini",
+            "function": "Secretes saliva containing amylase and lipase to initiate chemical digestion and lubricate the oral cavity.",
+            "deficiency": "Xerostomia (dry mouth), dental caries, and swallowing difficulties.",
+            "sources": "Adequate systemic hydration and parasympathetic stimulation.",
+            "disease": "Sjogren's Syndrome & Sialolithiasis",
+            "pathway": "Autoimmune lymphocytic infiltration of exocrine glands destroying acinar cells and reducing saliva production.",
+            "mermaidCode": "graph TD\n    A[Lymphocytic Infiltration] --> B[Acinar Cell Destruction]\n    B --> C[Severe Xerostomia]\n    C --> D[Dental Decay & Oral Infection]",
+            "drugs": "Pilocarpine & Cevimeline",
+            "drugAction": "Pilocarpine is a muscarinic agonist stimulating salivary gland secretion."
+        },
+        "trachea": {
+            "name": "Trachea",
+            "system": "Respiratory System",
+            "formula": "Cartilaginous C-Shaped Ring Conduit",
+            "function": "Provides a rigid, patent airway passage connecting the larynx to the primary bronchi for airflow.",
+            "deficiency": "Airway collapse, stridor, and respiratory distress.",
+            "sources": "Structural cartilage integrity and calcium-phosphate balance.",
+            "disease": "Tracheal Stenosis & Tracheomalacia",
+            "pathway": "Chronic intubation trauma or cartilage degeneration leading to luminal narrowing or airway flaccidity.",
+            "mermaidCode": "graph TD\n    A[Mucosal Injury or Intubation] --> B[Fibrotic Healing]\n    B --> C[Luminal Narrowing]\n    C --> D[Tracheal Stenosis]",
+            "drugs": "Budesonide & Bronchodilators",
+            "drugAction": "Budesonide reduces localized airway inflammation and swelling."
+        },
+        "bones": {
+            "name": "Skeletal System (Bones)",
+            "system": "Skeletal System",
+            "formula": "Hydroxyapatite & Collagen Matrix",
+            "function": "Provides structural support, protects vital internal organs, anchors skeletal muscles, and stores calcium.",
+            "deficiency": "Osteopenia, bone fragility, fractures, and skeletal deformities.",
+            "sources": "Calcium, Vitamin D, phosphorus, and mechanical weight-bearing exercise.",
+            "disease": "Osteoporosis",
+            "pathway": "Imbalance between osteoclast bone resorption and osteoblast bone formation leading to porous bone matrix.",
+            "mermaidCode": "graph TD\n    A[Estrogen Loss or Aging] --> B[Osteoclast Hyperactivity]\n    B --> C[Trabecular Bone Degradation]\n    C --> D[Fracture Risk Elevation]",
+            "drugs": "Alendronate & Denosumab",
+            "drugAction": "Alendronate inhibits osteoclast-mediated bone resorption; Denosumab blocks RANK ligand to prevent osteoclast activation."
+        },
+        "skeletal_muscles": {
+            "name": "Skeletal Muscles",
+            "system": "Muscular System",
+            "formula": "Actin & Myosin Sarcomeric Filaments",
+            "function": "Generates mechanical force and movement, maintains posture, and produces heat via contraction.",
+            "deficiency": "Muscle weakness, atrophy, fatigue, and impaired mobility.",
+            "sources": "Protein, amino acids, ATP metabolism, and neuromuscular activation.",
+            "disease": "Muscular Dystrophy & Myasthenia Gravis",
+            "pathway": "Dystrophin gene mutation leading to sarcolemmal fragility, calcium influx, and progressive muscle fiber necrosis.",
+            "mermaidCode": "graph TD\n    A[Dystrophin Absence] --> B[Sarcolemma Instability]\n    B --> C[Calcium Influx & Necrosis]\n    C --> D[Fibrofatty Replacement]",
+            "drugs": "Prednisone & Eteplirsen",
+            "drugAction": "Prednisone slows muscle degeneration; Eteplirsen is an exon-skipping drug for Duchenne muscular dystrophy."
+        },
+        "bone_marrow": {
+            "name": "Bone Marrow",
+            "system": "Skeletal & Hematopoietic System",
+            "formula": "Hematopoietic Stem Cell Niches",
+            "function": "Generates all blood cell lineages including red blood cells, white blood cells, and platelets.",
+            "deficiency": "Anemia, leukopenia, thrombocytopenia, and immune failure.",
+            "sources": "Iron, folate, Vitamin B12, and erythropoietin stimulation.",
+            "disease": "Leukemia & Aplastic Anemia",
+            "pathway": "Clonal stem cell mutation or immune-mediated destruction of hematopoietic precursors.",
+            "mermaidCode": "graph TD\n    A[Stem Cell Mutation] --> B[Uncontrolled Clonal Expansion]\n    B --> C[Crowding of Marrow Space]\n    C --> D[Bone Marrow Failure]",
+            "drugs": "Imatinib & Epoetin Alfa",
+            "drugAction": "Imatinib inhibits specific tyrosine kinases in leukemia; Epoetin Alfa stimulates red blood cell production."
+        },
+        "lymph_nodes": {
+            "name": "Lymph Nodes",
+            "system": "Lymphatic & Immune System",
+            "formula": "B-Cell & T-Cell Filtration Pods",
+            "function": "Filters lymph fluid, traps foreign pathogens and antigens, and initiates adaptive immune responses.",
+            "deficiency": "Impaired localized immunity and susceptibility to spreading infections.",
+            "sources": "Optimal lymphatic fluid flow and physical movement.",
+            "disease": "Lymphadenopathy & Lymphoma",
+            "pathway": "Antigenic stimulation causing rapid lymphocyte proliferation or malignant clonal transformation.",
+            "mermaidCode": "graph TD\n    A[Pathogen Influx] --> B[Antigen Presentation]\n    B --> C[Lymphocyte Proliferation]\n    C --> D[Node Swelling and Expansion]",
+            "drugs": "Cyclophosphamide & Rituximab",
+            "drugAction": "Rituximab targets CD20 on B-cell lymphomas; Cyclophosphamide cross-links DNA to halt cancer cell division."
+        },
+        "testes": {
+            "name": "Testes",
+            "system": "Reproductive & Endocrine System",
+            "formula": "Seminiferous Tubules & Leydig Cells",
+            "function": "Produces spermatozoa and synthesizes testosterone regulating male secondary sex characteristics and spermatogenesis.",
+            "deficiency": "Hypogonadism, infertility, and low testosterone symptoms.",
+            "sources": "Cholesterol precursors, luteinizing hormone, and follicle-stimulating hormone.",
+            "disease": "Testicular Cancer & Male Hypogonadism",
+            "pathway": "Germ cell malignant transformation or primary gonadal failure leading to impaired androgen synthesis.",
+            "mermaidCode": "graph TD\n    A[Genetic or Environmental Insult] --> B[Leydig/Germ Cell Damage]\n    B --> C[Testosterone Deficiency]\n    C --> D[Infertility & Hypogonadism]",
+            "drugs": "Testosterone Replacement & Cisplatin",
+            "drugAction": "Testosterone restores hormonal levels; Cisplatin is a chemotherapeutic agent for testicular germ cell tumors."
+        },
+        "ovaries": {
+            "name": "Ovaries",
+            "system": "Reproductive & Endocrine System",
+            "formula": "Follicular and Stromal Matrix",
+            "function": "Produces oocytes and synthesizes estrogen and progesterone regulating the menstrual cycle and pregnancy.",
+            "deficiency": "Premature ovarian failure, amenorrhea, infertility, and menopause symptoms.",
+            "sources": "Cholesterol, gonadotropin signaling, and micronutrients.",
+            "disease": "Polycystic Ovary Syndrome (PCOS) & Ovarian Cancer",
+            "pathway": "Insulin resistance and hyperandrogenism causing arrested follicular development and multiple ovarian cysts.",
+            "mermaidCode": "graph TD\n    A[Hyperinsulinemia] --> B[Androgen Overproduction by Ovaries]\n    B --> C[Follicular Arrest]\n    C --> D[Cyst Formation & Anovulation]",
+            "drugs": "Spironolactone & Metformin",
+            "drugAction": "Spironolactone blocks androgen receptors; Metformin lowers insulin levels to restore ovulation."
+        },
+        "uterus": {
+            "name": "Uterus",
+            "system": "Reproductive System",
+            "formula": "Myometrium & Endometrium Tissue",
+            "function": "Nurtures the fertilized ovum, develops the placenta during gestation, and expels the fetus during childbirth.",
+            "deficiency": "Infertility, menstrual abnormalities, and structural failure to carry a pregnancy.",
+            "sources": "Estrogen, progesterone, and rich vascular blood supply.",
+            "disease": "Uterine Fibroids (Leiomyoma) & Endometriosis",
+            "pathway": "Monoclonal proliferation of myometrial smooth muscle cells driven by estrogen and progesterone stimulation.",
+            "mermaidCode": "graph TD\n    A[Hormonal Stimulation] --> B[Smooth Muscle Proliferation]\n    B --> C[Fibroid Nodule Growth]\n    C --> D[Pelvic Pain & Bleeding]",
+            "drugs": "Leuprolide & Progestins",
+            "drugAction": "Leuprolide suppresses estrogen production by acting as a GnRH agonist to shrink fibroids."
+        },
+        "prostate": {
+            "name": "Prostate Gland",
+            "system": "Reproductive System",
+            "formula": "Tubuloalveolar Glandular Matrix",
+            "function": "Secretes alkaline prostatic fluid that nourishes and protects sperm during ejaculation.",
+            "deficiency": "Dysuria, urinary retention, and reproductive fluid alterations.",
+            "sources": "Dihydrotestosterone (DHT) signaling and zinc.",
+            "disease": "Benign Prostatic Hyperplasia (BPH) & Prostate Cancer",
+            "pathway": "Conversion of testosterone to DHT by 5-alpha-reductase driving stromal and epithelial cell proliferation.",
+            "mermaidCode": "graph TD\n    A[DHT Accumulation] --> B[Stromal & Epithelial Proliferation]\n    B --> C[Urethral Compression]\n    C --> D[Obstructive Urinary Symptoms]",
+            "drugs": "Tamsulosin & Finasteride",
+            "drugAction": "Tamsulosin relaxes smooth muscle in the prostate neck; Finasteride inhibits 5-alpha-reductase to shrink the prostate."
+        },
+        "mammary_glands": {
+            "name": "Mammary Glands (Breasts)",
+            "system": "Reproductive & Integumentary System",
+            "formula": "Lactiferous Ducts & Alveolar Lobules",
+            "function": "Produces and secretes milk for infant nutrition during lactation.",
+            "deficiency": "Lactation failure.",
+            "sources": "Prolactin, oxytocin, and nutritional caloric intake.",
+            "disease": "Breast Cancer & Mastitis",
+            "pathway": "Genetic mutations (BRCA1/2) or hormonal deregulation leading to uncontrolled epithelial cell division in ducts.",
+            "mermaidCode": "graph TD\n    A[DNA Mutation / Estrogen Stimulation] --> B[Epithelial Cell Hyperproliferation]\n    B --> C[Carcinoma In Situ]\n    C --> D[Invasive Breast Cancer]",
+            "drugs": "Tamoxifen & Trastuzumab",
+            "drugAction": "Tamoxifen blocks estrogen receptors on cancer cells; Trastuzumab targets HER2-positive breast cancer cells."
+        },
+        "eyes": {
+            "name": "The Eyes",
+            "system": "Sensory Nervous System",
+            "formula": "Retinal Photoreceptor & Lens Optics",
+            "function": "Captures light rays, focuses images, and transduces photons into neural electrical impulses for visual perception.",
+            "deficiency": "Blindness, visual acuity loss, color blindness, and refractive errors.",
+            "sources": "Vitamin A (rhodopsin synthesis), lutein, and continuous oxygen supply.",
+            "disease": "Glaucoma & Macular Degeneration",
+            "pathway": "Elevated intraocular pressure leading to optic nerve head damage and retinal ganglion cell apoptosis.",
+            "mermaidCode": "graph TD\n    A[Elevated Aqueous Humor Pressure] --> B[Optic Nerve Compression]\n    B --> C[Ganglion Cell Apoptosis]\n    C --> D[Progressive Vision Loss]",
+            "drugs": "Latanoprost & Timolol",
+            "drugAction": "Latanoprost increases aqueous humor outflow; Timolol reduces aqueous humor production."
+        },
+        "ears": {
+            "name": "The Ears",
+            "system": "Sensory & Vestibular System",
+            "formula": "Cochlear Hair Cells & Semicircular Canals",
+            "function": "Transduces sound waves into neural signals for hearing and maintains spatial equilibrium and balance.",
+            "deficiency": "Hearing loss, deafness, vertigo, and balance disorders.",
+            "sources": "Healthy inner ear blood flow and potassium-rich endolymph.",
+            "disease": "Meniere's Disease & Sensorineural Hearing Loss",
+            "pathway": "Endolymphatic hydrops causing distention of inner ear membranes, cochlear hair cell damage, and vertigo.",
+            "mermaidCode": "graph TD\n    A[Endolymph Accumulation] --> B[Membrane Distention]\n    B --> C[Hair Cell Distortion]\n    C --> D[Vertigo & Hearing Loss]",
+            "drugs": "Betahistine & Diuretics",
+            "drugAction": "Betahistine improves microcirculation in the inner ear; diuretics reduce endolymph fluid pressure."
+        },
+        "spinal_cord": {
+            "name": "Spinal Cord",
+            "system": "Central Nervous System",
+            "formula": "Myelinated Nerve Tract & Gray Matter",
+            "function": "Relays neural signals between the brain and the rest of the body; coordinates spinal reflexes.",
+            "deficiency": "Paralysis, sensory loss, and loss of autonomic reflex functions below the lesion.",
+            "sources": "Continuous oxygen, glucose, and intact myelin sheath components.",
+            "disease": "Spinal Cord Injury & Amyotrophic Lateral Sclerosis (ALS)",
+            "pathway": "Mechanical trauma or motor neuron degeneration leading to axonal disruption and permanent signal interruption.",
+            "mermaidCode": "graph TD\n    A[Trauma or Motor Neuron Loss] --> B[Axonal Severing & Demyelination]\n    B --> C[Neural Circuit Disruption]\n    C --> D[Loss of Motor/Sensory Function]",
+            "drugs": "Riluzole & Methylprednisolone",
+            "drugAction": "Riluzole reduces glutamate excitotoxicity in motor neurons; Methylprednisolone reduces acute secondary inflammation."
+        },
+        "heart_valves": {
+            "name": "Heart Valves (Aortic/Mitral)",
+            "system": "Cardiovascular System",
+            "formula": "Endothelial-Lined Fibrous Tissue Flaps",
+            "function": "Ensure unidirectional blood flow through the heart chambers and prevent backflow.",
+            "deficiency": "Heart murmur, pulmonary congestion, and reduced cardiac output.",
+            "sources": "Healthy collagen synthesis and laminar blood flow.",
+            "disease": "Valvular Stenosis & Regurgitation",
+            "pathway": "Calcium deposition or rheumatic inflammation leading to stiffened or incomplete closure of valve leaflets.",
+            "mermaidCode": "graph TD\n    A[Rheumatic Fever or Calcification] --> B[Leaflet Fibrosis]\n    B --> C[Stenosis or Incomplete Closure]\n    C --> D[Cardiac Workload Increase]",
+            "drugs": "Warfarin & Diuretics",
+            "drugAction": "Warfarin prevents blood clots on damaged valves; diuretics manage fluid overload symptoms."
+        },
+        "pharynx": {
+            "name": "Pharynx",
+            "system": "Respiratory & Digestive System",
+            "formula": "Fibromuscular Muscular Conduit",
+            "function": "Conducts swallowed food and liquids into the esophagus and air into the larynx and trachea.",
+            "deficiency": "Dysphagia, choking risk, and airway obstruction.",
+            "sources": "Proper neuromuscular coordination and mucosal hydration.",
+            "disease": "Pharyngitis & Obstructive Sleep Apnea",
+            "pathway": "Inflammatory infection or pharyngeal airway collapse during sleep due to muscle relaxation.",
+            "mermaidCode": "graph TD\n    A[Upper Airway Collapse] --> B[Intermittent Occlusion]\n    B --> C[Hypoxia & Arousal]\n    C --> D[Sleep Disruption]",
+            "drugs": "Penicillin & Positive Airway Pressure (CPAP)",
+            "drugAction": "Penicillin treats bacterial pharyngitis; CPAP maintains positive pressure to keep the pharynx open."
+        },
+        "larynx": {
+            "name": "Larynx (Voice Box)",
+            "system": "Respiratory System",
+            "formula": "Cartilage & Vocal Fold Framework",
+            "function": "Houses the vocal cords to produce sound for speech and protects the lower airway during swallowing.",
+            "deficiency": "Hoarseness, aphonia, or aspiration hazards.",
+            "sources": "Proper hydration and mucosal lubrication.",
+            "disease": "Laryngitis & Laryngeal Cancer",
+            "pathway": "Viral infection, vocal strain, or tobacco-induced squamous cell dysplasia.",
+            "mermaidCode": "graph TD\n    A[Tobacco / Strain Trigger] --> B[Epithelial Dysplasia]\n    B --> C[Vocal Cord Mass Formation]\n    C --> D[Hoarseness & Airway Obstruction]",
+            "drugs": "Corticosteroids",
+            "drugAction": "Corticosteroids reduce acute laryngeal swelling and inflammation."
+        },
+        "appendix": {
+            "name": "Vermiform Appendix",
+            "system": "Gastrointestinal & Lymphatic System",
+            "formula": "Lymphoid Follicle-Rich Diverticulum",
+            "function": "Houses gut-associated lymphoid tissue and may act as a reservoir for beneficial commensal bacteria.",
+            "deficiency": "No significant deficiency syndrome recognized after removal; possible minor immune and microbiome effects.",
+            "sources": "Healthy gut microbiota balance.",
+            "disease": "Acute Appendicitis",
+            "pathway": "Luminal obstruction (fecalith or lymphoid hyperplasia) causing bacterial overgrowth, wall distension, and ischemic necrosis.",
+            "mermaidCode": "graph TD\n    A[Luminal Obstruction] --> B[Bacterial Overgrowth]\n    B --> C[Wall Distension & Ischemia]\n    C --> D[Perforation Risk]",
+            "drugs": "Piperacillin-Tazobactam",
+            "drugAction": "Broad-spectrum antibiotic covering gut flora used peri-operatively or in select non-surgical management."
+        },
+        "tonsils": {
+            "name": "Tonsils (Palatine)",
+            "system": "Lymphatic & Immune System",
+            "formula": "Lymphoepithelial Ring Tissue",
+            "function": "Traps and samples inhaled or ingested pathogens at the oropharyngeal entrance to trigger early adaptive immune responses.",
+            "deficiency": "Mildly increased susceptibility to upper respiratory infection after removal.",
+            "sources": "Adequate lymphocyte supply and mucosal immune signaling.",
+            "disease": "Tonsillitis & Tonsillar Hypertrophy",
+            "pathway": "Viral or bacterial (Streptococcal) infection triggering lymphoid hyperplasia, edema, and exudate formation.",
+            "mermaidCode": "graph TD\n    A[Pathogen Exposure] --> B[Lymphoid Hyperplasia]\n    B --> C[Crypt Exudate Formation]\n    C --> D[Airway/Swallowing Obstruction]",
+            "drugs": "Penicillin & Ibuprofen",
+            "drugAction": "Penicillin eradicates Streptococcal infection; Ibuprofen reduces associated pain and swelling."
+        },
+        "nose_nasal_cavity": {
+            "name": "Nose & Nasal Cavity",
+            "system": "Respiratory System",
+            "formula": "Ciliated Mucosal Turbinate Passages",
+            "function": "Filters, warms, and humidifies inhaled air while housing olfactory receptors for smell.",
+            "deficiency": "Impaired air filtration, anosmia, and increased respiratory infection risk.",
+            "sources": "Adequate mucosal hydration and ciliary function.",
+            "disease": "Allergic Rhinitis & Chronic Sinusitis",
+            "pathway": "IgE-mediated mast cell degranulation in the nasal mucosa causing vasodilation, edema, and mucus hypersecretion.",
+            "mermaidCode": "graph TD\n    A[Allergen Binding to IgE] --> B[Mast Cell Degranulation]\n    B --> C[Histamine Release]\n    C --> D[Nasal Congestion & Rhinorrhea]",
+            "drugs": "Cetirizine & Fluticasone Nasal Spray",
+            "drugAction": "Cetirizine is an antihistamine blocking H1 receptors; intranasal Fluticasone reduces local mucosal inflammation."
+        },
+        "tongue": {
+            "name": "Tongue",
+            "system": "Digestive & Sensory System",
+            "formula": "Papillae & Taste Bud Muscular Organ",
+            "function": "Manipulates food for chewing and swallowing, articulates speech, and detects taste via specialized taste buds.",
+            "deficiency": "Dysgeusia, dysphagia, and speech articulation difficulties.",
+            "sources": "Zinc, B-vitamins, and adequate salivary lubrication.",
+            "disease": "Oral Thrush (Candidiasis) & Glossitis",
+            "pathway": "Fungal overgrowth or nutritional deficiency causing papillary atrophy and mucosal inflammation.",
+            "mermaidCode": "graph TD\n    A[Candida Overgrowth or Deficiency] --> B[Papillary Atrophy]\n    B --> C[Mucosal Inflammation]\n    C --> D[Taste Disturbance & Pain]",
+            "drugs": "Nystatin & Fluconazole",
+            "drugAction": "Nystatin and Fluconazole are antifungal agents that eliminate Candida overgrowth on the tongue's surface."
+        },
+        "teeth": {
+            "name": "Teeth",
+            "system": "Digestive System",
+            "formula": "Enamel-Dentin-Pulp Mineralized Structure",
+            "function": "Mechanically breaks down food through mastication, initiating the digestive process.",
+            "deficiency": "Malnutrition from impaired chewing, tooth loss, and speech difficulty.",
+            "sources": "Calcium, phosphate, fluoride, and Vitamin D.",
+            "disease": "Dental Caries & Periodontitis",
+            "pathway": "Bacterial biofilm acid production demineralizes enamel, progressing to pulp infection and periodontal bone loss.",
+            "mermaidCode": "graph TD\n    A[Bacterial Biofilm Formation] --> B[Acid-Mediated Demineralization]\n    B --> C[Enamel & Dentin Erosion]\n    C --> D[Pulp Infection & Bone Loss]",
+            "drugs": "Fluoride Treatment & Amoxicillin",
+            "drugAction": "Fluoride remineralizes enamel; Amoxicillin treats secondary bacterial dental infections."
+        },
+        "ureters": {
+            "name": "Ureters",
+            "system": "Urinary System",
+            "formula": "Smooth Muscle Peristaltic Tubes",
+            "function": "Transports urine via peristaltic contractions from the renal pelvis of each kidney to the bladder.",
+            "deficiency": "Urinary reflux, hydronephrosis, and impaired urine drainage.",
+            "sources": "Adequate hydration and unobstructed luminal patency.",
+            "disease": "Ureterolithiasis (Ureteral Stones)",
+            "pathway": "Crystal aggregation in concentrated urine forms calculi that lodge in the ureter, causing obstruction and colicky pain.",
+            "mermaidCode": "graph TD\n    A[Urine Supersaturation] --> B[Crystal Aggregation]\n    B --> C[Stone Formation & Impaction]\n    C --> D[Obstructive Uropathy]",
+            "drugs": "Tamsulosin & Ketorolac",
+            "drugAction": "Tamsulosin relaxes ureteral smooth muscle to facilitate stone passage; Ketorolac manages renal colic pain."
+        },
+        "urethra": {
+            "name": "Urethra",
+            "system": "Urinary System",
+            "formula": "Stratified/Transitional Epithelial Tube",
+            "function": "Conducts urine (and semen in males) from the bladder to the external environment during voiding.",
+            "deficiency": "Urinary retention, incontinence, or obstructed voiding.",
+            "sources": "Healthy epithelial integrity and adequate hydration.",
+            "disease": "Urethritis & Urethral Stricture",
+            "pathway": "Bacterial or gonococcal infection causing mucosal inflammation, or repeated trauma leading to fibrotic scar narrowing.",
+            "mermaidCode": "graph TD\n    A[Infection or Trauma] --> B[Mucosal Inflammation]\n    B --> C[Fibrotic Scar Formation]\n    C --> D[Luminal Narrowing]",
+            "drugs": "Ceftriaxone & Azithromycin",
+            "drugAction": "Ceftriaxone and Azithromycin together treat gonococcal and chlamydial urethritis."
+        },
+        "fallopian_tubes": {
+            "name": "Fallopian Tubes (Oviducts)",
+            "system": "Reproductive System",
+            "formula": "Ciliated Epithelial Muscular Tubes",
+            "function": "Transports the ovum from the ovary to the uterus and serves as the site of fertilization.",
+            "deficiency": "Infertility and increased risk of ectopic pregnancy.",
+            "sources": "Healthy ciliary function and unobstructed tubal patency.",
+            "disease": "Pelvic Inflammatory Disease (Salpingitis)",
+            "pathway": "Ascending bacterial infection causing tubal mucosal inflammation, scarring, and adhesion formation.",
+            "mermaidCode": "graph TD\n    A[Ascending Infection] --> B[Tubal Mucosal Inflammation]\n    B --> C[Scarring & Adhesions]\n    C --> D[Tubal Obstruction & Infertility]",
+            "drugs": "Doxycycline & Ceftriaxone",
+            "drugAction": "Combination antibiotic therapy eradicates the causative pathogens and limits further tubal scarring."
+        },
+        "vas_deferens": {
+            "name": "Vas Deferens",
+            "system": "Reproductive System",
+            "formula": "Muscular Sperm Transport Duct",
+            "function": "Transports mature spermatozoa from the epididymis to the ejaculatory duct during ejaculation.",
+            "deficiency": "Obstructive azoospermia and male infertility.",
+            "sources": "Structural patency and adequate smooth muscle peristaltic function.",
+            "disease": "Congenital Bilateral Absence of the Vas Deferens (CBAVD)",
+            "pathway": "CFTR gene mutation leading to failure of vas deferens development during embryogenesis.",
+            "mermaidCode": "graph TD\n    A[CFTR Gene Mutation] --> B[Impaired Wolffian Duct Development]\n    B --> C[Vas Deferens Agenesis]\n    C --> D[Obstructive Azoospermia]",
+            "drugs": "Assisted Reproductive Techniques (No Direct Pharmacologic Cure)",
+            "drugAction": "Surgical sperm retrieval combined with IVF/ICSI bypasses the absent duct; no drug reverses the structural defect."
+        },
+        "blood_vessels": {
+            "name": "Blood Vessels (Arteries & Veins)",
+            "system": "Cardiovascular System",
+            "formula": "Endothelium-Lined Tunica Intima/Media/Adventitia",
+            "function": "Forms a closed circulatory network transporting oxygenated and deoxygenated blood between the heart and tissues.",
+            "deficiency": "Ischemia, poor wound healing, and impaired venous return.",
+            "sources": "Healthy endothelial function, nitric oxide signaling, and lipid balance.",
+            "disease": "Atherosclerosis",
+            "pathway": "Endothelial injury allows LDL infiltration, macrophage foam cell formation, and fibrous plaque buildup narrowing the lumen.",
+            "mermaidCode": "graph TD\n    A[Endothelial Injury] --> B[LDL Infiltration]\n    B --> C[Foam Cell & Plaque Formation]\n    C --> D[Luminal Narrowing & Ischemia]",
+            "drugs": "Atorvastatin & Aspirin",
+            "drugAction": "Atorvastatin lowers LDL cholesterol via HMG-CoA reductase inhibition; Aspirin inhibits platelet aggregation to prevent clot formation."
+        },
+        "diaphragm": {
+            "name": "Diaphragm",
+            "system": "Respiratory & Muscular System",
+            "formula": "Dome-Shaped Skeletal Muscle Sheet",
+            "function": "Contracts and flattens to expand the thoracic cavity, driving inhalation as the primary muscle of respiration.",
+            "deficiency": "Reduced tidal volume, orthopnea, and respiratory insufficiency.",
+            "sources": "Intact phrenic nerve innervation and adequate muscular conditioning.",
+            "disease": "Diaphragmatic Paralysis & Hiatal Hernia",
+            "pathway": "Phrenic nerve injury or diaphragmatic hiatus weakening allowing abdominal viscera to herniate into the thorax.",
+            "mermaidCode": "graph TD\n    A[Phrenic Nerve Injury or Hiatal Weakness] --> B[Impaired Diaphragmatic Excursion]\n    B --> C[Reduced Thoracic Expansion]\n    C --> D[Dyspnea & Reflux Symptoms]",
+            "drugs": "Proton Pump Inhibitors (for hiatal hernia symptoms)",
+            "drugAction": "Reduces acid reflux symptoms associated with hiatal herniation; paralysis itself has no pharmacologic reversal."
+        },
+        "joints_cartilage": {
+            "name": "Joints & Cartilage",
+            "system": "Skeletal System",
+            "formula": "Hyaline Cartilage & Synovial Membrane Matrix",
+            "function": "Provides low-friction articulation between bones, absorbs mechanical load, and allows a range of motion.",
+            "deficiency": "Joint pain, stiffness, and reduced mobility.",
+            "sources": "Glucosamine, collagen precursors, and synovial fluid lubrication.",
+            "disease": "Osteoarthritis & Rheumatoid Arthritis",
+            "pathway": "Progressive cartilage matrix degradation and subchondral bone remodeling, or autoimmune synovial inflammation eroding joint surfaces.",
+            "mermaidCode": "graph TD\n    A[Cartilage Matrix Breakdown] --> B[Subchondral Bone Exposure]\n    B --> C[Synovial Inflammation]\n    C --> D[Joint Pain & Stiffness]",
+            "drugs": "Methotrexate & NSAIDs",
+            "drugAction": "Methotrexate suppresses autoimmune synovial inflammation in rheumatoid arthritis; NSAIDs reduce pain and local inflammation."
+        }
+    },
+    "organelles": {
+        "nucleus": {
+            "name": "Nucleus",
+            "system": "Cellular Command Hub",
+            "formula": "Chromatin & DNA Double Helix",
+            "function": "Houses and protects genetic code, coordinates transcription, protein synthesis, and cellular replication.",
+            "deficiency": "Genetic mutations, cellular senescence, and oncogenesis.",
+            "sources": "Free nucleic acids and nuclear proteins.",
+            "disease": "Progeria Syndrome",
+            "pathway": "LMNA gene mutation generates toxic progerin accumulation at the nuclear envelope.",
+            "mermaidCode": "graph TD\n    A[LMNA Mutation] --> B[Progerin Accumulation]\n    B --> C[Nuclear Envelope Blebbing]\n    C --> D[Cellular Senescence]",
+            "drugs": "Lonafarnib",
+            "drugAction": "Farnesyltransferase inhibitor blocking toxic progerin membrane attachment."
+        },
+        "mitochondria": {
+            "name": "Mitochondria",
+            "system": "Cellular Powerhouse",
+            "formula": "Adenosine Triphosphate (ATP)",
+            "function": "Generates cellular energy via oxidative phosphorylation and the Krebs cycle.",
+            "deficiency": "Mitochondrial myopathy, extreme fatigue, and lactic acidosis.",
+            "sources": "Glucose, oxygen, CoQ10, and carnitine.",
+            "disease": "MELAS Syndrome",
+            "pathway": "MT-TL1 gene mutations destabilize respiratory chain complexes, reducing ATP and generating ROS.",
+            "mermaidCode": "graph TD\n    A[MT-TL1 Mutation] --> B[Respiratory Chain Defect]\n    B --> C[ATP Depletion & ROS]\n    C --> D[Cellular Necrosis]",
+            "drugs": "Coenzyme Q10 & L-Arginine",
+            "drugAction": "CoQ10 acts as an electron carrier bypassing complex blocks; L-Arginine restores vascular endothelial function."
+        },
+        "ribosomes": {
+            "name": "Ribosome",
+            "system": "Protein Production Factory",
+            "formula": "Ribosomal RNA & Proteins",
+            "function": "Translates messenger RNA templates into amino acid polypeptide chains.",
+            "deficiency": "Ribosomopathies and bone marrow failure.",
+            "sources": "Transfer RNA and dietary amino acids.",
+            "disease": "Diamond-Blackfan Anemia",
+            "pathway": "Ribosomal protein mutations trigger nucleolar stress and p53-mediated erythroid apoptosis.",
+            "mermaidCode": "graph TD\n    A[Ribosomal Mutation] --> B[Nucleolar Stress]\n    B --> C[p53 Stabilization]\n    C --> D[Erythroid Apoptosis]",
+            "drugs": "Prednisolone",
+            "drugAction": "Suppresses ribosomal stress apoptosis and stimulates multi-lineage bone marrow erythropoiesis."
+        },
+        "er": {
+            "name": "Endoplasmic Reticulum",
+            "system": "Folding & Synthesis Network",
+            "formula": "Rough & Smooth Membrane Network",
+            "function": "Rough ER folds proteins; smooth ER synthesizes lipids and detoxifies metabolic byproducts.",
+            "deficiency": "ER stress, misfolded protein accumulation, and lipid synthesis failure.",
+            "sources": "Fatty acids and calcium ions.",
+            "disease": "Alpha-1 Antitrypsin Deficiency",
+            "pathway": "Mutant alpha-1 antitrypsin proteins misfold and aggregate inside hepatocyte ER.",
+            "mermaidCode": "graph TD\n    A[Protein Mutation] --> B[Hepatocyte ER Aggregation]\n    B --> C[Severe ER Stress]\n    C --> D[Liver & Lung Damage]",
+            "drugs": "Augmented Antitrypsin Therapy",
+            "drugAction": "Intravenous plasma-derived replacement protein protecting alveolar elastic matrices."
+        },
+        "golgi": {
+            "name": "Golgi Apparatus",
+            "system": "Molecular Sorting & Shipping",
+            "formula": "Flattened Cisternae Stacks",
+            "function": "Processes, packages, and tags proteins and lipids for intracellular routing or secretion.",
+            "deficiency": "Congenital glycosylation disorders and skeletal dysplasia.",
+            "sources": "Transport vesicles and carbohydrates.",
+            "disease": "I-Cell Disease",
+            "pathway": "Enzyme deficiency prevents mannose-6-phosphate tagging, causing lysosomal enzymes to be secreted extracellularly.",
+            "mermaidCode": "graph TD\n    A[Phosphotransferase Defect] --> B[Missing M6P Tag]\n    B --> C[Enzyme Secretion Error]\n    C --> D[Lysosomal Storage Failure]",
+            "drugs": "Enzyme Replacement Therapy",
+            "drugAction": "Restores functional cellular hydrolase machinery via receptor-mediated uptake."
+        },
+        "lysosomes": {
+            "name": "Lysosome",
+            "system": "Waste Disposal System",
+            "formula": "Acid Hydrolases",
+            "function": "Degrades worn-out organelles, engulfed microbes, and foreign macromolecules via acidic enzymes.",
+            "deficiency": "Lysosomal storage diseases (Gaucher, Tay-Sachs).",
+            "sources": "Proton pumps maintaining acidic interior.",
+            "disease": "Gaucher Disease",
+            "pathway": "Beta-glucocerebrosidase deficiency causes glucosylceramide accumulation in macrophages.",
+            "mermaidCode": "graph TD\n    A[Enzyme Deficiency] --> B[Glucosylceramide Buildup]\n    B --> C[Gaucher Cell Infiltration]\n    C --> D[Organomegaly]",
+            "drugs": "Imiglucerase & Miglustat",
+            "drugAction": "Imiglucerase replaces deficient beta-glucocerebrosidase; Miglustat inhibits glycolipid synthesis."
+        },
+        "peroxisomes": {
+            "name": "Peroxisome",
+            "system": "Oxidative Detoxification",
+            "formula": "Catalase & Oxidase Enzymes",
+            "function": "Breaks down fatty acid chains via beta-oxidation and detoxifies hydrogen peroxide and reactive metabolites.",
+            "deficiency": "Zellweger spectrum disorders and toxic VLCFA accumulation.",
+            "sources": "Cellular lipids and micronutrients.",
+            "disease": "Zellweger Syndrome",
+            "pathway": "PEX gene mutation halts peroxisomal protein import, impairing VLCFA breakdown and neurological myelination.",
+            "mermaidCode": "graph TD\n    A[PEX Gene Mutation] --> B[Peroxisomal Assembly Failure]\n    B --> C[VLCFA Accumulation]\n    C --> D[Severe Neurological Deficits]",
+            "drugs": "Cholic Acid & Supportive Care",
+            "drugAction": "Cholic acid replaces deficient primary bile acids; supportive care manages symptoms."
+        },
+        "cytoskeleton": {
+            "name": "Cytoskeleton",
+            "system": "Structural Matrix & Transport",
+            "formula": "Microfilaments, Intermediate Filaments, & Microtubules",
+            "function": "Maintains cell shape, enables intracellular vesicle transport, and drives cellular motility and division.",
+            "deficiency": "Cell structural collapse, impaired mitosis, and neurodegeneration.",
+            "sources": "Actin monomers and tubulin dimers.",
+            "disease": "Amyotrophic Lateral Sclerosis & Hereditary Spastic Paraplegia",
+            "pathway": "Microtubule-associated protein mutations disrupt axonal transport and trigger motor neuron degeneration.",
+            "mermaidCode": "graph TD\n    A[Cytoskeletal Protein Defect] --> B[Axonal Transport Breakdown]\n    B --> C[Motor Neuron Stress]\n    C --> D[Progressive Paralysis]",
+            "drugs": "Riluzole & Edaravone",
+            "drugAction": "Edaravone scavenges free radicals to protect cytoskeletal integrity in neurons."
+        },
+        "centrosome": {
+            "name": "Centrosome",
+            "system": "Microtubule Organizing Center",
+            "formula": "Centriole Pair & Pericentriolar Material",
+            "function": "Organizes microtubules and establishes the mitotic spindle during cell division.",
+            "deficiency": "Aneuploidy, failed cell division, and oncogenic transformation.",
+            "sources": "Tubulin subunits and centriolar proteins.",
+            "disease": "Microcephaly & Centrosomal Amplification in Cancer",
+            "pathway": "Centrosome overduplication leads to multipolar mitotic spindles, chromosome missegregation, and tumor progression.",
+            "mermaidCode": "graph TD\n    A[Centrosome Amplification] --> B[Multipolar Spindle Formation]\n    B --> C[Chromosomal Missegregation]\n    C --> D[Genomic Instability & Cancer]",
+            "drugs": "PLK4 Inhibitors",
+            "drugAction": "Polo-like kinase 4 inhibitors block centriole replication to halt cancer cell proliferation."
+        },
+        "vacuoles": {
+            "name": "Vacuole / Vesicle",
+            "system": "Storage & Transport Network",
+            "formula": "Lipid Bilayer Compartment",
+            "function": "Stores water, nutrients, and waste products, and manages localized molecular transport.",
+            "deficiency": "Impaired osmotic balance and vesicular trafficking breakdown.",
+            "sources": "Plasma membrane invaginations and endocytic solutes.",
+            "disease": "Danon Disease",
+            "pathway": "LAMP2 gene mutation impairs autophagic vacuole clearance, causing glycogen accumulation in cardiac and skeletal muscle.",
+            "mermaidCode": "graph TD\n    A[LAMP2 Mutation] --> B[Autophagic Vacuole Accumulation]\n    B --> C[Glycogen Overload in Muscle]\n    C --> D[Cardiomyopathy & Myopathy]",
+            "drugs": "Cardioprotective Agents",
+            "drugAction": "Manage secondary heart failure symptoms and regulate cellular metabolism."
+        },
+        "nucleolus": {
+            "name": "Nucleolus",
+            "system": "Ribosome Assembly Sub-compartment",
+            "formula": "rRNA & Dense Fibrillar Component",
+            "function": "Synthesizes ribosomal RNA and assembles ribosomal subunits.",
+            "deficiency": "Impaired protein synthesis and nucleolar stress.",
+            "sources": "Nucleotides and ribosomal proteins.",
+            "disease": "Treacher Collins Syndrome",
+            "pathway": "TCOF1 gene mutation impairs rDNA transcription, causing neurocristopathy and craniofacial anomalies.",
+            "mermaidCode": "graph TD\n    A[TCOF1 Mutation] --> B[rDNA Transcription Defect]\n    B --> C[Nucleolar Stress]\n    C --> D[Neural Crest Cell Apoptosis]",
+            "drugs": "Folic Acid & Supportive Surgery",
+            "drugAction": "Folic acid supports neural crest development; surgery corrects craniofacial structural anomalies."
+        },
+        "plasma_membrane": {
+            "name": "Plasma Membrane",
+            "system": "Cellular Boundary & Signaling",
+            "formula": "Phospholipid Bilayer & Cholesterol",
+            "function": "Regulates molecular entry and exit, maintains membrane potential, and mediates cell-to-cell signaling.",
+            "deficiency": "Osmotic instability, transport failure, and loss of electrical gradient.",
+            "sources": "Cholesterol, phospholipids, and essential fatty acids.",
+            "disease": "Cystic Fibrosis",
+            "pathway": "CFTR gene mutation misfolds chloride channels, causing thick viscous mucus accumulation in epithelial linings.",
+            "mermaidCode": "graph TD\n    A[CFTR Mutation] --> B[Chloride Transport Failure]\n    B --> C[Dehydrated Mucus Layer]\n    C --> D[Obstructive Lung & Pancreatic Damage]",
+            "drugs": "Ivacaftor & Lumacaftor",
+            "drugAction": "Ivacaftor potentiates CFTR channel opening; Lumacaftor corrects protein folding and membrane trafficking."
+        },
+        "proteasome": {
+            "name": "Proteasome",
+            "system": "Protein Degradation Complex",
+            "formula": "26S Protein Degradation Barrel",
+            "function": "Degrades unneeded or damaged proteins by proteolysis tagged by ubiquitin.",
+            "deficiency": "Ubiquitin-protein aggregate accumulation and proteotoxic stress.",
+            "sources": "Amino acids and ATP.",
+            "disease": "Multiple Myeloma",
+            "pathway": "Uncontrolled plasma cell proliferation producing excess monoclonal proteins overwhelming proteasome degradation pathways.",
+            "mermaidCode": "graph TD\n    A[Monoclonal Protein Overload] --> B[Proteasome Saturation]\n    B --> C[Proteotoxic Stress]\n    C --> D[Myeloma Cell Survival]",
+            "drugs": "Bortezomib",
+            "drugAction": "Proteasome inhibitor inducing terminal ER stress and apoptosis in malignant plasma cells."
+        },
+        "secretory_vesicle": {
+            "name": "Secretory Vesicle",
+            "system": "Exocytosis & Transport",
+            "formula": "Clathrin-Coated Lipid Bilayer",
+            "function": "Transports hormones, neurotransmitters, and enzymes from the Golgi apparatus to the plasma membrane for extracellular release.",
+            "deficiency": "Impaired neurotransmitter release and endocrine hormone secretion failure.",
+            "sources": "Phospholipids, ATP, and cargo proteins.",
+            "disease": "Lambert-Eaton Myasthenic Syndrome",
+            "pathway": "Autoantibodies target presynaptic voltage-gated calcium channels, preventing calcium influx and synaptic vesicle exocytosis.",
+            "mermaidCode": "graph TD\n    A[Autoantibody Attack] --> B[VGCC Blockade]\n    B --> C[Impaired Calcium Influx]\n    C --> D[Vesicle Exocytosis Failure]",
+            "drugs": "3-Diaminopyridine",
+            "drugAction": "Blocks potassium channels to prolong nerve terminal depolarization and enhance calcium entry for vesicle fusion."
+        },
+        "microbodies_glyoxysome": {
+            "name": "Glyoxysome",
+            "system": "Metabolic Specialization",
+            "formula": "Enzymatic Microbody Matrix",
+            "function": "Specialized peroxisome variant that converts stored lipids into carbohydrates via the glyoxylate cycle.",
+            "deficiency": "Defective lipid metabolism and blocked energy conversion pathways.",
+            "sources": "Fatty acids and coenzymes.",
+            "disease": "Lipid Storage Myopathy",
+            "pathway": "Impaired microbody oxidation leads to toxic neutral lipid buildup within cellular compartments.",
+            "mermaidCode": "graph TD\n    A[Enzymatic Block] --> B[Lipid Oxidation Failure]\n    B --> C[Neutral Lipid Accumulation]\n    C --> D[Cellular Metabolic Stress]",
+            "drugs": "Riboflavin & Carnitine Supplementation",
+            "drugAction": "Acts as a metabolic cofactor to rescue impaired mitochondrial and microbody fatty acid oxidation steps."
+        },
+        "vaults": {
+            "name": "Vault Complex",
+            "system": "Ribonucleoprotein Transport",
+            "formula": "vRNA & Major Vault Protein (MVP)",
+            "function": "Large cytoplasmic ribonucleoprotein particles implicated in nucleocytoplasmic transport, drug resistance, and immune response.",
+            "deficiency": "Abnormal intracellular transport and altered xenobiotic clearance.",
+            "sources": "Ribonucleic acids and structural MVP subunits.",
+            "disease": "Multidrug Resistance in Cancer",
+            "pathway": "Upregulation of vault complexes sequester chemotherapeutic agents away from target sites, conferring cellular drug resistance.",
+            "mermaidCode": "graph TD\n    A[MVP Upregulation] --> B[Drug Sequestration]\n    B --> C[Chemotherapeutic Evasion]\n    C --> D[Malignant Cell Survival]",
+            "drugs": "P-Glycoprotein and Vault Inhibitors",
+            "drugAction": "Block intracellular vesicular sequestration channels to re-sensitize tumor cells to chemotherapy."
+        },
+        "centriole": {
+            "name": "Centriole",
+            "system": "Cytoskeletal Organizing Matrix",
+            "formula": "9+0 Microtubule Triplet Cylinder",
+            "function": "Directs formation of cilia and flagella, and organizes the mitotic spindle apparatus during cell division.",
+            "deficiency": "Defective cellular motility, cilia dyskinesia, and mitotic arrest.",
+            "sources": "Alpha- and beta-tubulin heterodimers.",
+            "disease": "Primary Ciliary Dyskinesia & Kartagener Syndrome",
+            "pathway": "Centriolar structural protein defects impair basal body docking, halting ciliary beat and causing chronic respiratory infections.",
+            "mermaidCode": "graph TD\n    A[Centriolar Defect] --> B[Basal Body Malformation]\n    B --> C[Immotile Cilia]\n    C --> D[Chronic Respiratory & Sinus Infections]",
+            "drugs": "Mucolytics & Bronchodilators",
+            "drugAction": "Thin respiratory secretions and open airways to compensate for defective ciliary clearance."
+        },
+        "melanosome": {
+            "name": "Melanosome",
+            "system": "Pigment Synthesis & Photoprotection",
+            "formula": "Tyrosinase & Melanin Polymer Matrix",
+            "function": "Synthesizes, stores, and transports melanin pigments to protect skin cells from ultraviolet radiation-induced DNA damage.",
+            "deficiency": "Hypopigmentation, photosensitivity, and high risk of photocarcinogenesis.",
+            "sources": "Tyrosine amino acid and copper cofactors.",
+            "disease": "Oculocutaneous Albinism",
+            "pathway": "Tyrosinase enzyme mutation halts melanin synthesis inside melanosomes, leaving skin and eyes unprotected against UV radiation.",
+            "mermaidCode": "graph TD\n    A[Tyrosinase Mutation] --> B[Melanin Synthesis Failure]\n    B --> C[Lack of UV Protection]\n    C --> D[Photodamage & Skin Cancer Risk]",
+            "drugs": "Sunscreen & Photoprotective Agents",
+            "drugAction": "Physical and chemical UV barriers substituting for absent intracellular melanin pigmentation."
+        },
+        "stress_granule": {
+            "name": "Stress Granule",
+            "system": "Translational Control & Ribosomal Defense",
+            "formula": "Aggregated mRNPs & RNA-Binding Proteins",
+            "function": "Transiently halts translation of non-housekeeping mRNAs and sequesters proteins during cellular stress conditions like heat shock or oxidative damage.",
+            "deficiency": "Uncontrolled translation under stress and chronic ribonucleoprotein aggregation.",
+            "sources": "Translation initiation factors and poly(A)+ mRNA.",
+            "disease": "Amyotrophic Lateral Sclerosis & Frontotemporal Dementia",
+            "pathway": "Pathological mutations in RNA-binding proteins (e.g., TDP-43, FUS) cause persistent stress granule solidification and toxic aggregate formation.",
+            "mermaidCode": "graph TD\n    A[Mutant RNA-Binding Proteins] --> B[Persistent Stress Granule Assembly]\n    B --> C[Fibrillar Protein Aggregation]\n    C --> D[Motor Neuron Neurodegeneration]",
+            "drugs": "Antisense Oligonucleotides",
+            "drugAction": "Target and degrade mutant RNA transcripts to prevent aberrant protein translation and aggregate buildup."
+        },
+        "endosome": {
+            "name": "Endosome",
+            "system": "Endocytic Trafficking & Sorting",
+            "formula": "Vesicular Tubulovesicular Network",
+            "function": "Sorts, recycles, or directs internalized extracellular molecules and cell surface receptors to lysosomes for degradation.",
+            "deficiency": "Impaired receptor recycling, cholesterol accumulation, and altered signal transduction.",
+            "sources": "Plasma membrane lipids and clathrin-coated vesicles.",
+            "disease": "Niemann-Pick Disease Type C",
+            "pathway": "NPC1 or NPC2 gene mutation traps unesterified cholesterol and glycosphingolipids within late endosomes and lysosomes.",
+            "mermaidCode": "graph TD\n    A[NPC1/NPC2 Mutation] --> B[Endosomal Cholesterol Sequestration]\n    B --> C[Lysosomal Storage Dysfunction]\n    C --> D[Progressive Neurodegeneration]",
+            "drugs": "Miglustat",
+            "drugAction": "Inhibits glycosphingolipid biosynthesis to reduce secondary lipid storage pathology in endosomes."
+        },
+        "autophagosome": {
+            "name": "Autophagosome",
+            "system": "Macroautophagy & Quality Control",
+            "formula": "Double-Membrane Isolation Vesicle",
+            "function": "Encloses damaged organelles and cytoplasmic protein aggregates, delivering them to lysosomes for degradation and nutrient recycling.",
+            "deficiency": "Accumulation of damaged mitochondria, toxic protein aggregates, and accelerated cellular aging.",
+            "sources": "Phospholipids, LC3-II proteins, and amino acids.",
+            "disease": "Parkinson's Disease",
+            "pathway": "PINK1/Parkin pathway mutations impair mitophagy, leading to damaged mitochondria accumulation and dopaminergic neuronal death.",
+            "mermaidCode": "graph TD\n    A[PINK1/Parkin Mutation] --> B[Mitophagy Impairment]\n    B --> C[Damaged Mitochondria Accumulation]\n    C --> D[Dopaminergic Neuron Loss]",
+            "drugs": "Rapamycin",
+            "drugAction": "mTOR inhibitor that upregulates autophagosome formation and clears aggregated proteins."
+        },
+        "glyoxysome": {
+            "name": "Glyoxysome",
+            "system": "Plant Metabolic Specialization",
+            "formula": "Catalase & Glyoxylate Cycle Enzymes",
+            "function": "Converts stored lipids into sugars via the glyoxylate cycle, providing energy for germination and cellular metabolism.",
+            "deficiency": "Blocked lipid-to-carbohydrate conversion and arrested energy utilization.",
+            "sources": "Fatty acids and cellular cofactors.",
+            "disease": "X-linked Adrenoleukodystrophy",
+            "pathway": "ABCD1 transporter mutation disrupts very-long-chain fatty acid import into peroxisomal/glyoxysomal equivalents, causing adrenal insufficiency.",
+            "mermaidCode": "graph TD\n    A[ABCD1 Mutation] --> B[VLCFA Import Failure]\n    B --> C[Peroxisomal Beta-Oxidation Defect]\n    C --> D[Demyelination & Adrenal Failure]",
+            "drugs": "Lorenzo's Oil & Bone Marrow Transplant",
+            "drugAction": "Lorenzo's oil normalizes plasma very-long-chain fatty acid levels by competitively inhibiting elongation enzymes."
+        }
+    },
+           vitamins: {
+                vitamin_a: {
+                    name: "Vitamin A",
+                    system: "Fat Soluble Vitamin",
+                    formula: "Retinol Structure",
+                    function: "Forms rhodopsin for low-light vision and regulates epithelial cell gene transcription.",
+                    deficiency: "Xerophthalmia, night blindness, and dry skin.",
+                    sources: "Cod liver oil, sweet potatoes, carrots, and spinach.",
+                    disease: "Xerophthalmia & Night Blindness",
+                    pathway: "Retinol deficiency halts 11-cis-retinal synthesis, preventing rhodopsin assembly in retinal rods.",
+                    mermaidCode: "graph TD\n    A[Retinol Deficiency] --> B[No 11-cis-retinal]\n    B --> C[Rhodopsin Failure]\n    C --> D[Night Blindness]",
+                    drugs: "Retinyl Palmitate",
+                    drugAction: "Hydrolyzed in mucosa to retinol, restoring visual pigment and epithelial differentiation."
+                },
+                vitamin_b1: {
+                    name: "Vitamin B1",
+                    system: "Water Soluble Vitamin",
+                    formula: "Thiamine Structure",
+                    function: "Acts as a coenzyme (TPP) for carbohydrate metabolism and branched-chain amino acid catabolism.",
+                    deficiency: "Beriberi, Wernicke-Korsakoff syndrome, and peripheral neuropathy.",
+                    sources: "Whole grains, pork, legumes, and seeds.",
+                    disease: "Beriberi & Wernicke-Korsakoff Syndrome",
+                    pathway: "Thiamine shortage blocks pyruvate dehydrogenase and alpha-ketoglutarate dehydrogenase, crippling ATP production in high-energy neural tissue.",
+                    mermaidCode: "graph TD\n    A[Thiamine Deficiency] --> B[TPP Enzyme Block]\n    B --> C[Impaired Glucose Oxidation]\n    C --> D[Neural Cell Energy Starvation]",
+                    drugs: "Thiamine Hydrochloride",
+                    drugAction: "Restores coenzyme function for mitochondrial dehydrogenases, normalizing cellular respiration."
+                },
+                vitamin_b2: {
+                    name: "Vitamin B2",
+                    system: "Water Soluble Vitamin",
+                    formula: "Riboflavin Structure",
+                    function: "Precursor for coenzymes FAD and FMN, driving redox reactions in the electron transport chain.",
+                    deficiency: "Angular cheilitis, glossitis, stomatitis, and corneal vascularization.",
+                    sources: "Beef liver, dairy products, eggs, and green leafy vegetables.",
+                    disease: "Ariboflavinosis",
+                    pathway: "Riboflavin depletion impairs flavin-dependent oxidoreductases, disrupting cellular energy production and tissue maintenance.",
+                    mermaidCode: "graph TD\n    A[Riboflavin Deficiency] --> B[FAD/FMN Depletion]\n    B --> C[Redox Reaction Failure]\n    C --> D[Epithelial Tissue Breakdown]",
+                    drugs: "Riboflavin Supplements",
+                    drugAction: "Provides active prosthetic groups for flavoprotein enzymes, rescuing cellular redox pathways."
+                },
+                vitamin_b3: {
+                    name: "Vitamin B3",
+                    system: "Water Soluble Vitamin",
+                    formula: "Niacin / Nicotinic Acid",
+                    function: "Precursor to NAD and NADP, essential for cellular metabolic redox reactions and DNA repair.",
+                    deficiency: "Pellagra (diarrhea, dermatitis, dementia, and death).",
+                    sources: "Chicken, tuna, turkey, and peanuts.",
+                    disease: "Pellagra",
+                    pathway: "Niacin deficiency starves cells of NAD/NADP pools, halting glycolysis, TCA cycling, and cellular repair.",
+                    mermaidCode: "graph TD\n    A[Niacin Depletion] --> B[NAD/NADP Deficiency]\n    B --> C[Oxidative Phosphorylation Block]\n    C --> D[Systemic Pellagra Manifestation]",
+                    drugs: "Niacinamide",
+                    drugAction: "Acts as a precursor for pyridine nucleotides, restoring cellular energy transfer and metabolic flux."
+                },
+                vitamin_b5: {
+                    name: "Vitamin B5",
+                    system: "Water Soluble Vitamin",
+                    formula: "Pantothenic Acid Structure",
+                    function: "Core component of Coenzyme A (CoA) and acyl carrier protein, vital for fatty acid metabolism.",
+                    deficiency: "Paresthesia, fatigue, 'burning feet syndrome', and adrenal insufficiency.",
+                    sources: "Shiitake mushrooms, avocado, chicken, and whole grains.",
+                    disease: "Pantothenic Acid Deficiency Syndrome",
+                    pathway: "Lack of pantothenic acid halts CoA synthesis, blocking the Krebs cycle and fatty acid beta-oxidation.",
+                    mermaidCode: "graph TD\n    A[Pantothenic Acid Shortage] --> B[CoA Synthesis Failure]\n    B --> C[Blocked Lipid & Carb Metabolism]\n    C --> D[Neurological Paresthesia]",
+                    drugs: "Dexpanthenol",
+                    drugAction: "Converted into pantothenic acid in vivo, supporting Coenzyme A biosynthesis and epithelial repair."
+                },
+                vitamin_b6: {
+                    name: "Vitamin B6",
+                    system: "Water Soluble Vitamin",
+                    formula: "Pyridoxine / Pyridoxal Phosphate",
+                    function: "Coenzyme for amino acid transamination, glycogenolysis, and neurotransmitter synthesis.",
+                    deficiency: "Microcytic anemia, peripheral neuropathy, and depression.",
+                    sources: "Chickpeas, beef liver, bananas, and poultry.",
+                    disease: "Sideroblastic Anemia & Neuropathy",
+                    pathway: "Deficiency inactivates delta-aminolevulinic acid synthase, blocking heme synthesis and normal neural signaling.",
+                    mermaidCode: "graph TD\n    A[Pyridoxal Phosphate Deficit] --> B[Inhibited Transamination]\n    B --> C[Impaired Heme & Neurotransmitter Synthesis]\n    C --> D[Microcytic Anemia & Neuropathy]",
+                    drugs: "Pyridoxine Hydrochloride",
+                    drugAction: "Acts as an essential enzymatic cofactor for amino acid metabolism and neurotransmitter production."
+                },
+                vitamin_b7: {
+                    name: "Vitamin B7",
+                    system: "Water Soluble Vitamin",
+                    formula: "Biotin Structure",
+                    function: "Coenzyme for carboxylase enzymes, facilitating carbon dioxide transfer in gluconeogenesis and lipogenesis.",
+                    deficiency: "Dermatitis, alopecia, conjunctivitis, and neurological impairments.",
+                    sources: "Egg yolks, almonds, sweet potatoes, and spinach.",
+                    disease: "Biotin Deficiency Dermatitis",
+                    pathway: "Biotin shortage deactivates key carboxylases, halting critical steps in fatty acid synthesis and energy production.",
+                    mermaidCode: "graph TD\n    A[Biotin Deficiency] --> B[Carboxylase Inactivation]\n    C[Blocked Gluconeogenesis] --> D[Alopecia & Skin Lesions]",
+                    drugs: "Biotin Supplements",
+                    drugAction: "Covalently binds carboxylase enzymes as a prosthetic group, restoring metabolic carboxylation."
+                },
+                vitamin_b9: {
+                    name: "Vitamin B9",
+                    system: "Water Soluble Vitamin",
+                    formula: "Folic Acid Structure",
+                    function: "Donates one-carbon units for DNA nucleotide synthesis, methylation, and cellular division.",
+                    deficiency: "Megaloblastic anemia, neural tube defects in fetuses, and glossitis.",
+                    sources: "Dark leafy greens, beans, lentils, and fortified grains.",
+                    disease: "Megaloblastic Anemia & Neural Tube Defects",
+                    pathway: "Folate deficiency halts purine and thymidine synthesis, arresting DNA replication in rapidly dividing cells.",
+                    mermaidCode: "graph TD\n    A[Folate Deficiency] --> B[Blocked Thymidine Synthesis]\n    B --> C[Impaired DNA Replication]\n    C --> D[Megaloblastic Arrest]",
+                    drugs: "Folic Acid",
+                    drugAction: "Provides reduced folates required for single-carbon transfers essential for DNA synthesis."
+                },
+                vitamin_b12: {
+                    name: "Vitamin B12",
+                    system: "Water Soluble Vitamin",
+                    formula: "Cobalamin Structure",
+                    function: "Coenzyme in DNA synthesis and myelin sheath creation for nerve conduction.",
+                    deficiency: "Pernicious anemia, neurological myelin degeneration, and neuropathy.",
+                    sources: "Shellfish, beef liver, fish, and dairy.",
+                    disease: "Pernicious Anemia",
+                    pathway: "Autoimmune parietal cell destruction blocks intrinsic factor and ileal B12 absorption.",
+                    mermaidCode: "graph TD\n    A[Intrinsic Factor Loss] --> B[B12 Malabsorption]\n    B --> C[Methionine Synthase Block]\n    C --> D[Megaloblastic Anemia]",
+                    drugs: "Cyanocobalamin Injections",
+                    drugAction: "Bypasses gastrointestinal intrinsic factor requirements to restore DNA replication."
+                },
+                vitamin_c: {
+                    name: "Vitamin C",
+                    system: "Water Soluble Vitamin",
+                    formula: "Ascorbic Acid Structure",
+                    function: "Antioxidant neutralizing ROS; cofactor for collagen synthesis and wound healing.",
+                    deficiency: "Scurvy (bruising, bleeding gums, poor wound healing).",
+                    sources: "Citrus fruits, strawberries, bell peppers, and broccoli.",
+                    disease: "Scurvy",
+                    pathway: "Ascorbic acid deficiency fails to maintain iron in ferrous state for collagen hydroxylases.",
+                    mermaidCode: "graph TD\n    A[Ascorbic Acid Deficiency] --> B[Hydroxylase Inactivation]\n    C[Unstable Collagen Triple Helix] --> D[Capillary Fragility & Scurvy]",
+                    drugs: "Ascorbic Acid Supplements",
+                    drugAction: "Donates electrons to maintain active hydroxylase cofactors for collagen stabilization."
+                },
+                vitamin_d: {
+                    name: "Vitamin D3",
+                    system: "Fat Soluble Vitamin",
+                    formula: "Cholecalciferol Structure",
+                    function: "Promotes intestinal calcium and phosphorus absorption, bone density, and immune modulation.",
+                    deficiency: "Rickets in children, osteomalacia in adults.",
+                    sources: "UVB skin exposure, fatty fish, and egg yolks.",
+                    disease: "Rickets & Osteomalacia",
+                    pathway: "Inadequate sunlight/hydroxylation lowers 1,25-dihydroxyvitamin D, impairing calcium absorption.",
+                    mermaidCode: "graph TD\n    A[Low Vitamin D3] --> B[Reduced Calcium Absorption]\n    B --> C[Secondary Hyperparathyroidism]\n    C --> D[Bone Matrix Demineralization]",
+                    drugs: "Calcitriol",
+                    drugAction: "Active hormone binding nuclear vitamin D receptors to upregulate calcium-binding proteins."
+                },
+                vitamin_e: {
+                    name: "Vitamin E",
+                    system: "Fat Soluble Vitamin",
+                    formula: "Alpha-Tocopherol Structure",
+                    function: "Shields cell membranes and LDLs from lipid peroxidation and free radical oxidative damage.",
+                    deficiency: "Hemolytic anemia, spinocerebellar ataxia, and neuropathy.",
+                    sources: "Wheat germ oil, sunflower seeds, almonds, and avocados.",
+                    disease: "Vitamin E Deficiency Ataxia",
+                    pathway: "Absence of alpha-tocopherol allows ROS attack on polyunsaturated fatty acids in membranes.",
+                    mermaidCode: "graph TD\n    A[Alpha-Tocopherol Absence] --> B[ROS Membrane Attack]\n    B --> C[Lipid Peroxidation Cascade]\n    C --> D[Erythrocyte Lysis & Ataxia]",
+                    drugs: "Alpha-Tocopherol Supplements",
+                    drugAction: "Acts as a chain-breaking antioxidant neutralizing free radicals within cellular membranes."
+                },
+                vitamin_k: {
+                    name: "Vitamin K",
+                    system: "Fat Soluble Vitamin",
+                    formula: "Phylloquinone & Menaquinone",
+                    function: "Required for gamma-carboxylation of blood coagulation factors and bone calcium binding.",
+                    deficiency: "Uncontrolled bleeding, easy bruising, and reduced bone density.",
+                    sources: "Kale, spinach, collard greens, and fermented cheeses.",
+                    disease: "Coagulopathy",
+                    pathway: "Antagonism prevents gamma-carboxylation of factors II, VII, IX, and X, stopping clotting.",
+                    mermaidCode: "graph TD\n    A[Vitamin K Deficiency] --> B[No Gamma-Carboxylation]\n    B --> C[Inactive Clotting Factors]\n    C --> D[Hemorrhagic Diathesis]",
+                    drugs: "Phytonadione (Vitamin K1)",
+                    drugAction: "Acts as an essential cofactor for hepatic gamma-glutamyl carboxylase to activate clotting factors."
+                }
+            },
+           molecules: {
+                dna: {
+                    name: "Deoxyribonucleic Acid",
+                    system: "Nucleic Acid Polymer",
+                    formula: "Double Helix Structure",
+                    function: "Stores, encodes, and transmits all genetic specifications for growth and reproduction.",
+                    deficiency: "Severe developmental arrest and genomic instability.",
+                    sources: "Endogenous nucleotide synthesis from dietary purines/pyrimidines.",
+                    disease: "Xeroderma Pigmentosum",
+                    pathway: "Nucleotide excision repair gene mutations prevent UV-induced pyrimidine dimer removal.",
+                    mermaidCode: "graph TD\n    A[NER Gene Mutation] --> B[UV Pyrimidine Dimers Persist]\n    B --> C[Genomic Mutagenesis]\n    C --> D[Cutaneous Malignancies]",
+                    drugs: "Topical DNA Repair Enzymes",
+                    drugAction: "Liposome-encapsulated repair enzymes assist in locating and repairing UV-induced DNA lesions."
+                },
+                atp: {
+                    name: "Adenosine Triphosphate",
+                    system: "Nucleoside Triphosphate",
+                    formula: "High-Energy Phosphate Bonds",
+                    function: "Core energy currency of cells powering muscular contraction, active transport, and synthesis.",
+                    deficiency: "Instant cellular rigor and rapid cell death.",
+                    sources: "Glycolysis and mitochondrial oxidative phosphorylation.",
+                    disease: "Ischemic Cellular Necrosis",
+                    pathway: "Vascular occlusion stops oxygen delivery, halting mitochondrial ATP synthesis within minutes.",
+                    mermaidCode: "graph TD\n    A[Vascular Ischemia] --> B[Oxygen Deprivation]\n    B --> C[ATP Exhaustion]\n    C --> D[Na+/K+ Pump Failure & Lysis]",
+                    drugs: "Dobutamine & Nitroglycerin",
+                    drugAction: "Dobutamine increases contractility; Nitroglycerin dilates coronary vasculature to restore oxygen."
+                },
+                hemoglobin: {
+                    name: "Hemoglobin",
+                    system: "Metalloprotein Complex",
+                    formula: "Tetrameric Iron-Containing Protein",
+                    function: "Binds oxygen in lungs, transports it to respiring tissues, and returns carbon dioxide.",
+                    deficiency: "Anemia, hypoxia, chronic lethargy, and shortness of breath.",
+                    sources: "Bioavailable dietary iron, folate, and protein.",
+                    disease: "Sickle Cell Anemia",
+                    pathway: "Beta-globin point mutation (valine for glutamic acid) causes Hb polymerization under low O2.",
+                    mermaidCode: "graph TD\n    A[Beta-Globin Mutation] --> B[HbS Polymerization]\n    B --> C[Erythrocyte Sickling]\n    C --> D[Vaso-Occlusive Crisis]",
+                    drugs: "Hydroxyurea & L-Glutamine",
+                    drugAction: "Hydroxyurea stimulates fetal hemoglobin (HbF) production to inhibit sickle polymerization."
+                },
+                water: {
+                    name: "Water",
+                    system: "Universal Biological Solvent",
+                    formula: "H2O Polar Molecule",
+                    function: "Forms 60% of body weight matrix; essential for temperature regulation, transport, and reactions.",
+                    deficiency: "Dehydration, elevated heart rate, kidney failure, and shock.",
+                    sources: "Drinking water, fresh raw foods, and metabolic oxidation.",
+                    disease: "Hypovolemic Shock",
+                    pathway: "Acute fluid loss drops blood volume, reducing cardiac output and triggering baroreceptor shock.",
+                    mermaidCode: "graph TD\n    A[Acute Fluid Loss] --> B[Intravascular Volume Drop]\n    B --> C[Baroreceptor Reflex Failure]\n    C --> D[Multi-Organ Hypoperfusion]",
+                    drugs: "Normal Saline / Lactated Ringer's",
+                    drugAction: "Isotonic crystalloid fluid resuscitation expands intravascular volume and restores perfusion."
+                },
+                glucose: {
+                    name: "Glucose",
+                    system: "Simple Monosaccharide",
+                    formula: "C6H12O6",
+                    function: "Primary substrate for cellular respiration and energy production across all systemic tissues.",
+                    deficiency: "Hypoglycemia (shakes, confusion, loss of consciousness, coma).",
+                    sources: "Dietary carbohydrates and hepatic glycogenolysis.",
+                    disease: "Diabetic Ketoacidosis (DKA)",
+                    pathway: "Beta-cell destruction halts insulin, forcing lipolysis, fatty acid oxidation, and ketone accumulation.",
+                    mermaidCode: "graph TD\n    A[Absolute Insulin Deficiency] --> B[Unchecked Lipolysis]\n    B --> C[Hepatic Ketogenesis]\n    C --> D[Severe Metabolic Acidosis]",
+                    drugs: "Regular Insulin Infusion",
+                    drugAction: "Stimulates peripheral glucose uptake, halts lipolysis, and clears circulating ketone bodies."
+                },
+                insulin: {
+                    name: "Insulin",
+                    system: "Peptide Hormone",
+                    formula: "51 Amino Acid Heterodimer",
+                    function: "Regulates blood glucose homeostasis by facilitating cellular uptake into muscle and adipose tissue.",
+                    deficiency: "Hyperglycemia, cellular starvation, and impaired anabolic metabolism.",
+                    sources: "Endogenous synthesis and secretion by pancreatic beta cells.",
+                    disease: "Type 2 Diabetes Mellitus",
+                    pathway: "Peripheral insulin resistance prevents glucose transporter translocation, causing chronic hyperglycemia.",
+                    mermaidCode: "graph TD\n    A[Insulin Receptor Resistance] --> B[Impaired GLUT4 Translocation]\n    B --> C[Chronic Hyperglycemia]\n    C --> D[Beta-Cell Exhaustion & Failure]",
+                    drugs: "Metformin",
+                    drugAction: "Decreases hepatic gluconeogenesis and enhances peripheral insulin sensitivity."
+                },
+                cholesterol: {
+                    name: "Cholesterol",
+                    system: "Sterol Lipid Molecule",
+                    formula: "C27H46O Steroid Backbone",
+                    function: "Maintains cell membrane fluidity and serves as precursor for steroid hormones and bile acids.",
+                    deficiency: "Impaired cell membrane integrity and disrupted steroid hormone synthesis.",
+                    sources: "Endogenous hepatic synthesis and animal-based dietary fats.",
+                    disease: "Atherosclerosis",
+                    pathway: "LDL accumulation beneath the arterial endothelium undergoes oxidation, triggering macrophage engulfment and plaque growth.",
+                    mermaidCode: "graph TD\n    A[Endothelial LDL Accumulation] --> B[Macrophage Phagocytosis]\n    B --> C[Foam Cell Formation]\n    C --> D[Fibrous Atheromatous Plaque]",
+                    drugs: "Atorvastatin",
+                    drugAction: "Inhibits HMG-CoA reductase to lower hepatic cholesterol synthesis and clear LDL from blood."
+                },
+                albumin: {
+                    name: "Albumin",
+                    system: "Plasma Globular Protein",
+                    formula: "Single-Chain 585 Amino Acids",
+                    function: "Maintains plasma oncotic pressure and transports hydrophobic molecules, hormones, and drugs.",
+                    deficiency: "Edema, ascites, and generalized fluid retention.",
+                    sources: "Synthesized exclusively by the liver from dietary amino acids.",
+                    disease: "Hepatic Cirrhosis & Ascites",
+                    pathway: "Chronic liver failure drops albumin synthesis, lowering plasma oncotic pressure and driving fluid into interstitial spaces.",
+                    mermaidCode: "graph TD\n    A[Hepatocyte Necrosis] --> B[Reduced Albumin Synthesis]\n    B --> C[Low Plasma Oncotic Pressure]\n    C --> D[Interstitial Edema & Ascites]",
+                    drugs: "25% Albumin Infusion",
+                    drugAction: "Restores intravascular oncotic pressure to pull interstitial fluid back into circulation."
+                },
+                glycogen: {
+                    name: "Glycogen",
+                    system: "Branched Polysaccharide",
+                    formula: "(C6H10O5)n Polymer",
+                    function: "Primary short-term energy storage molecule housed in liver and skeletal muscle tissues.",
+                    deficiency: "Exercise intolerance, muscle cramps, and fasting hypoglycemia.",
+                    sources: "Polymerized dietary glucose during periods of nutritional abundance.",
+                    disease: "Von Gierke Disease (Glycogen Storage Disease Type I)",
+                    pathway: "Glucose-6-phosphatase deficiency traps glycogen breakdown products in the liver, causing severe hypoglycemia and hepatomegaly.",
+                    mermaidCode: "graph TD\n    A[G6Pase Enzyme Defect] --> B[Blocked Glucose Release]\n    B --> C[Severe Fasting Hypoglycemia]\n    C --> D[Hepatomegaly & Lactic Acidosis]",
+                    drugs: "Uncooked Cornstarch Therapy",
+                    drugAction: "Provides slow-release dietary glucose to maintain stable blood sugar levels during fasting."
+                },
+                triglyceride: {
+                    name: "Triglyceride",
+                    system: "Neutral Lipid Ester",
+                    formula: "Glycerol + 3 Fatty Acids",
+                    function: "Major form of long-term energy storage stored within adipose tissue depots.",
+                    deficiency: "Weight loss, thermal insulation failure, and essential fatty acid restriction.",
+                    sources: "Dietary fats and de novo hepatic lipogenesis.",
+                    disease: "Acute Pancreatitis",
+                    pathway: "Severely elevated triglycerides release toxic free fatty acids upon capillary lipolysis, causing pancreatic tissue autodigestion.",
+                    mermaidCode: "graph TD\n    A[Severe Hypertriglyceridemia] --> B[Pancreatic Capillary Lipolysis]\n    B --> C[Free Fatty Acid Toxicity]\n    C --> D[Inflammatory Necrosis & Pancreatitis]",
+                    drugs: "Fenofibrate & Omega-3 Fatty Acids",
+                    drugAction: "Activates lipoprotein lipase and PPAR-alpha to lower circulating triglyceride concentrations."
+                },
+                cortisol: {
+                    name: "Cortisol",
+                    system: "Steroid Hormone (Glucocorticoid)",
+                    formula: "C21H30O5 Glucocorticoid Backbone",
+                    function: "Regulates stress response, immune function, glucose metabolism, and blood pressure.",
+                    deficiency: "Addison's disease, chronic fatigue, hypotension, and hypoglycemia.",
+                    sources: "Synthesized from cholesterol in the adrenal cortex.",
+                    disease: "Cushing's Syndrome",
+                    pathway: "Chronic excess glucocorticoid exposure alters fat distribution, proteolysis, and systemic metabolic balance.",
+                    mermaidCode: "graph TD\n    A[Excess Cortisol Secretion] --> B[Enhanced Gluconeogenesis]\n    B --> C[Protein Catabolism & Fat Redistribution]\n    C --> D[Central Obesity & Hypertension]",
+                    drugs: "Ketoconazole / Metyrapone",
+                    drugAction: "Inhibits adrenal steroidogenic enzymes to lower excess cortisol synthesis."
+                },
+                thyroxine: {
+                    name: "Thyroxine (T4)",
+                    system: "Tyrosine-Based Iodinated Hormone",
+                    formula: "C15H11I4NO4",
+                    function: "Controls basal metabolic rate, oxygen consumption, and cellular growth and development.",
+                    deficiency: "Hypothyroidism, weight gain, fatigue, and cold intolerance.",
+                    sources: "Iodine-rich foods and tyrosine-containing proteins.",
+                    disease: "Hashimoto's Thyroiditis",
+                    pathway: "Autoimmune destruction of thyroid follicular cells blocks hormone production, slowing systemic metabolism.",
+                    mermaidCode: "graph TD\n    A[Autoimmune Follicular Destruction] --> B[T3/T4 Hormone Deficiency]\n    B --> C[Reduced Basal Metabolic Rate]\n    C --> D[Systemic Hypothyroidism]",
+                    drugs: "Levothyroxine",
+                    drugAction: "Synthetic T4 replacement restoring normal metabolic rate and systemic energy homeostasis."
+                },
+                adrenaline: {
+                    name: "Adrenaline (Epinephrine)",
+                    system: "Catecholamine Hormone / Neurotransmitter",
+                    formula: "C9H13NO3",
+                    function: "Mediates the acute 'fight or flight' stress response, increasing heart rate and bronchodilation.",
+                    deficiency: "Impaired autonomic stress response and hypotensive tendencies.",
+                    sources: "Synthesized from tyrosine in the adrenal medulla.",
+                    disease: "Anaphylactic Shock",
+                    pathway: "Systemic mast cell degranulation releases massive histamine, causing profound vasodilation and airway edema.",
+                    mermaidCode: "graph TD\n    A[Allergen Exposure] --> B[Massive Histamine Release]\n    B --> C[Severe Vasodilation & Bronchospasm]\n    C --> D[Cardiovascular Collapse]",
+                    drugs: "Epinephrine Auto-Injector",
+                    drugAction: "Alpha and beta adrenergic agonism vasoconstricts vessels, relaxes bronchi, and stops anaphylaxis."
+                },
+                calcium_ion: {
+                    name: "Calcium Ion",
+                    system: "Divalent Mineral Cation",
+                    formula: "Ca2+",
+                    function: "Critical for bone mineralization, muscle contraction, nerve signal transmission, and coagulation.",
+                    deficiency: "Tetany, muscle spasms, numbness, and osteoporosis.",
+                    sources: "Dairy, leafy greens, fortified foods, and nuts.",
+                    disease: "Hypocalcemic Tetany",
+                    pathway: "Low extracellular calcium lowers the action potential threshold, causing spontaneous neuromuscular hyperexcitability.",
+                    mermaidCode: "graph TD\n    A[Extracellular Calcium Drop] --> B[Lowered Membrane Threshold]\n    B --> C[Spontaneous Neuromuscular Firing]\n    C --> D[Tetany & Carpopedal Spasms]",
+                    drugs: "Calcium Gluconate IV",
+                    drugAction: "Restores serum ionized calcium levels, stabilizing nerve membranes and stopping tetanic contractions."
+                },
+                potassium_ion: {
+                    name: "Potassium Ion",
+                    system: "Intracellular Electrolyte Cation",
+                    formula: "K+",
+                    function: "Maintains resting membrane potential, nerve impulse conduction, and cardiac muscle function.",
+                    deficiency: "Muscle weakness, cardiac arrhythmias, and paralysis.",
+                    sources: "Bananas, potatoes, spinach, and avocados.",
+                    disease: "Cardiac Arrhythmia (Hypokalemia)",
+                    pathway: "Low extracellular potassium hyperpolarizes cardiac cell membranes, triggering dangerous ventricular arrhythmias.",
+                    mermaidCode: "graph TD\n    A[Potassium Depletion] --> B[Membrane Hyperpolarization]\n    B --> C[Delayed Cardiac Repolarization]\n    C --> D[Ventricular Fibrillation Risk]",
+                    drugs: "Potassium Chloride Supplementation",
+                    drugAction: "Restores intracellular/extracellular potassium gradients, normalizing cardiac action potentials."
+                },
+                sodium_ion: {
+                    name: "Sodium Ion",
+                    system: "Extracellular Electrolyte Cation",
+                    formula: "Na+",
+                    function: "Drives action potential generation, maintains extracellular fluid volume, and regulates osmotic balance.",
+                    deficiency: "Hyponatremia, cerebral edema, confusion, and seizures.",
+                    sources: "Table salt, processed foods, and mineral-rich broths.",
+                    disease: "Severe Hyponatremia & Cerebral Edema",
+                    pathway: "Excess water retention or sodium loss drops serum osmolality, driving water into brain cells and causing swelling.",
+                    mermaidCode: "graph TD\n    A[Serum Sodium Drop] --> B[Hypoosmolar Gradient]\n    B --> C[Water Influx into Neurons]\n    C --> D[Cerebral Edema & Seizures]",
+                    drugs: "Hypertonic Saline (3% NaCl)",
+                    drugAction: "Osmotically draws excess fluid out of brain tissue and raises serum sodium to safe thresholds."
+                },
+                acetylcholine: {
+                    name: "Acetylcholine",
+                    system: "Neurotransmitter",
+                    formula: "C7H17NO3+",
+                    function: "Mediates neuromuscular transmission, autonomic nervous system function, and central nervous system memory.",
+                    deficiency: "Cognitive decline, memory loss, and generalized muscle weakness.",
+                    sources: "Endogenously synthesized from choline and acetyl-CoA.",
+                    disease: "Myasthenia Gravis",
+                    pathway: "Autoimmune antibodies target postsynaptic nicotinic receptors at the neuromuscular junction, blocking signal transmission.",
+                    mermaidCode: "graph TD\n    A[Autoimmune Receptor Attack] --> B[Blocked Neuromuscular Transmission]\n    B --> C[Failure of Muscle Action Potentials]\n    C --> D[Progressive Muscle Fatigue & Paralysis]",
+                    drugs: "Pyridostigmine",
+                    drugAction: "Inhibits acetylcholinesterase enzyme activity, increasing synaptic acetylcholine availability and muscle strength."
+                },
+                serotonin: {
+                    name: "Serotonin (5-HT)",
+                    system: "Monoamine Neurotransmitter",
+                    formula: "C10H12N2O",
+                    function: "Regulates mood, emotional stability, sleep cycles, gastrointestinal motility, and appetite.",
+                    deficiency: "Clinical depression, anxiety disorders, and sleep disturbances.",
+                    sources: "Synthesized from dietary tryptophan found in poultry, seeds, and nuts.",
+                    disease: "Major Depressive Disorder",
+                    pathway: "Reduced synaptic cleft reuptake efficiency and low neurotransmitter synthesis lead to chronic mood dysregulation.",
+                    mermaidCode: "graph TD\n    A[Synaptic Serotonin Deficit] --> B[Impaired Neural Circuit Signaling]\n    B --> C[Mood & Emotional Dysregulation]\n    C --> D[Clinical Depression Manifestation]",
+                    drugs: "Selective Serotonin Reuptake Inhibitors (SSRIs)",
+                    drugAction: "Blocks presynaptic serotonin transporter proteins to prolong synaptic availability and elevate mood."
+                },
+                dopamine: {
+                    name: "Dopamine",
+                    system: "Catecholamine Neurotransmitter",
+                    formula: "C8H11NO2",
+                    function: "Governs motor control, reward-motivated behavior, executive function, and autonomic regulation.",
+                    deficiency: "Tremors, rigidity, bradykinesia, and loss of motor coordination.",
+                    sources: "Endogenously synthesized from tyrosine in dopaminergic neurons.",
+                    disease: "Parkinson's Disease",
+                    pathway: "Degeneration of dopaminergic neurons in the substantia nigra strips the basal ganglia of essential motor modulation.",
+                    mermaidCode: "graph TD\n    A[Substantia Nigra Degeneration] --> B[Striatal Dopamine Depletion]\n    B --> C[Basal Ganglia Circuit Disruption]\n    C --> D[Tremors, Rigidity & Bradykinesia]",
+                    drugs: "Levodopa / Carbidopa",
+                    drugAction: "Crosses the blood-brain barrier to be converted into dopamine, restoring motor circuit signaling."
+                },
+                melatonin: {
+                    name: "Melatonin",
+                    system: "Indoleamine Hormone",
+                    formula: "C13H16N2O2",
+                    function: "Regulates the circadian rhythm, sleep-wake cycles, and seasonal endocrine responses.",
+                    deficiency: "Insomnia, delayed sleep phase syndrome, and circadian disruption.",
+                    sources: "Synthesized from serotonin in the pineal gland during darkness.",
+                    disease: "Circadian Rhythm Sleep Disorder",
+                    pathway: "Suppression of pineal gland synthesis via artificial light exposure prevents normal nocturnal signaling.",
+                    mermaidCode: "graph TD\n    A[Artificial Light Suppression] --> B[Blocked Pineal Melatonin Release]\n    B --> C[Circadian Phase Delay]\n    C --> D[Severe Insomnia & Fatigue]",
+                    drugs: "Exogenous Melatonin Supplements",
+                    drugAction: "Binds MT1 and MT2 receptors in the suprachiasmatic nucleus to signal biological night and induce sleep."
+                },
+                iron_molecule: {
+                    name: "Iron (Heme-Bound)",
+                    system: "Transition Metal Cofactor",
+                    formula: "Fe2+ / Fe3+",
+                    function: "Core component of oxygen transport proteins (hemoglobin, myoglobin) and electron transport chain cytochromes.",
+                    deficiency: "Iron-deficiency anemia, fatigue, weakness, and impaired cognitive development.",
+                    sources: "Red meat, poultry, lentils, spinach, and fortified cereals.",
+                    disease: "Iron Deficiency Anemia",
+                    pathway: "Depleted systemic iron stores halt protoporphyrin ring conversion and hemoglobin synthesis, resulting in microcytic cells.",
+                    mermaidCode: "graph TD\n    A[Iron Store Depletion] --> B[Inhibited Heme Synthesis]\n    B --> C[Erythrocyte Microcytosis]\n    C --> D[Systemic Tissue Hypoxia]",
+                    drugs: "Ferrous Sulfate",
+                    drugAction: "Provides bioavailable ferrous iron to replenish systemic stores and normalize hemoglobin production."
+                },
+                zinc_ion: {
+                    name: "Zinc Ion",
+                    system: "Essential Trace Mineral Cation",
+                    formula: "Zn2+",
+                    function: "Catalytic and structural cofactor for over 300 enzymes, supporting immune defense, wound healing, and DNA synthesis.",
+                    deficiency: "Alopecia, impaired immune response, delayed wound healing, and hypogeusia.",
+                    sources: "Oysters, beef, pumpkin seeds, lentils, and dairy.",
+                    disease: "Acrodermatitis Enteropathica",
+                    pathway: "Impaired intestinal zinc absorption disrupts zinc-finger protein stability, arresting cellular replication and skin integrity.",
+                    mermaidCode: "graph TD\n    A[Intestinal Zinc Malabsorption] --> B[Enzyme & Zinc-Finger Failure]\n    B --> C[Impaired Cell Replication]\n    C --> D[Severe Dermatitis & Immune Suppression]",
+                    drugs: "Zinc Gluconate Supplements",
+                    drugAction: "Restores intracellular zinc levels to reactivate dependent metalloenzymes and immune pathways."
+                },
+                magnesium_ion: {
+                    name: "Magnesium Ion",
+                    system: "Intracellular Divalent Cation",
+                    formula: "Mg2+",
+                    function: "Cofactor for ATP enzymatic reactions, neuromuscular transmission, and vascular tone regulation.",
+                    deficiency: "Muscle cramps, tremors, cardiac arrhythmias, and metabolic insulin resistance.",
+                    sources: "Almonds, spinach, black beans, avocados, and dark chocolate.",
+                    disease: "Torsades de Pointes & Severe Hypomagnesemia",
+                    pathway: "Magnesium depletion prolongs cardiac repolarization phase and destabilizes membrane resting potentials.",
+                    mermaidCode: "graph TD\n    A[Magnesium Deficiency] --> B[Impaired Na+/K+ Pump Function]\n    B --> C[Prolonged Ventricular Repolarization]\n    C --> D[Lethal Arrhythmia (Torsades de Pointes)]",
+                    drugs: "Magnesium Sulfate IV",
+                    drugAction: "Stabilizes cardiac cell membranes and blocks voltage-gated calcium channels to restore rhythm."
+                },
+                hyaluronic_acid: {
+                    name: "Hyaluronic Acid",
+                    system: "Glycosaminoglycan Polymer",
+                    formula: "Unbranched Polysaccharide Matrix",
+                    function: "Provides viscoelasticity and lubrication to synovial joints; retains moisture within the extracellular matrix of skin.",
+                    deficiency: "Joint stiffness, cartilage degradation, and loss of skin elasticity.",
+                    sources: "Bone broths, root vegetables, citrus fruits, and endogenous biosynthesis.",
+                    disease: "Osteoarthritis",
+                    pathway: "Degradation of synovial hyaluronic acid matrix increases mechanical friction and inflammatory joint destruction.",
+                    mermaidCode: "graph TD\n    A[Synovial Matrix Breakdown] --> B[Loss of Joint Viscoelasticity]\n    B --> C[Cartilaginous Friction & Wear]\n    C --> D[Chronic Osteoarthritis Pain]",
+                    drugs: "Intra-Articular Hyaluronan Injections",
+                    drugAction: "Replenishes joint fluid viscosity to cushion cartilage and suppress local inflammation."
+                },
+                collagen_molecule: {
+                    name: "Collagen",
+                    system: "Structural Fibrous Protein",
+                    formula: "Triple Helix Polypeptide Chain",
+                    function: "Provides structural tensile strength and mechanical scaffolding to skin, bones, tendons, and blood vessels.",
+                    deficiency: "Fragile connective tissue, joint pain, skin wrinkling, and poor structural integrity.",
+                    sources: "Bone broth, skin-on poultry, fish, and vitamin C-rich cofactors.",
+                    disease: "Ehlers-Danlos Syndrome",
+                    pathway: "Mutations in collagen genes disrupt triple helix cross-linking, causing extreme tissue hypermobility and fragility.",
+                    mermaidCode: "graph TD\n    A[Collagen Gene Mutation] --> B[Defective Triple Helix Assembly]\n    B --> C[Compromised Extracellular Matrix]\n    C --> D[Joint Hypermobility & Tissue Fragility]",
+                    drugs: "Ascorbic Acid & Hydrolyzed Collagen",
+                    drugAction: "Provides amino acid building blocks and hydroxylation cofactors to maximize matrix stability."
+                },
+                histamine: {
+                    name: "Histamine",
+                    system: "Biogenic Amine Autacoid",
+                    formula: "C5H9N3",
+                    function: "Mediates inflammatory immune responses, gastric acid secretion, and central neurotransmission.",
+                    deficiency: "Impaired gastric acid secretion and altered central wakefulness.",
+                    sources: "Endogenously synthesized via histidine decarboxylation in mast cells and basophils.",
+                    disease: "Allergic Rhinitis & Urticaria",
+                    pathway: "Antigen cross-linking of IgE on mast cells triggers rapid degranulation, releasing histamine into local tissues.",
+                    mermaidCode: "graph TD\n    A[Mast Cell IgE Activation] --> B[Rapid Histamine Release]\n    B --> C[Vasodilation & Capillary Leak]\n    C --> D[Pruritus, Edema & Bronchospasm]",
+                    drugs: "Cetirizine / Diphenhydramine",
+                    drugAction: "Inverse agonist at H1 histamine receptors to block downstream allergic inflammatory cascades."
+                },
+                nitric_oxide: {
+                    name: "Nitric Oxide (NO)",
+                    system: "Gaseous Signaling Molecule",
+                    formula: "NO",
+                    function: "Regulates vascular smooth muscle tone, neurotransmission, and macrophage immune defense.",
+                    deficiency: "Endothelial dysfunction, hypertension, and impaired erectile response.",
+                    sources: "Synthesized endogenously from L-arginine by endothelial nitric oxide synthase (eNOS).",
+                    disease: "Pulmonary Arterial Hypertension",
+                    pathway: "Impaired endothelial NO production leads to unchecked smooth muscle contraction and chronic vascular remodeling.",
+                    mermaidCode: "graph TD\n    A[Impaired eNOS Activity] --> B[Reduced Nitric Oxide Production]\n    B --> C[Vascular Smooth Muscle Contraction]\n    C --> D[Severe Pulmonary Hypertension]",
+                    drugs: "Sildenafil / Inhaled Nitric Oxide",
+                    drugAction: "Inhibits phosphodiesterase-5 to increase cGMP, causing smooth muscle relaxation and vasodilation."
+                },
+                gamma_aminobutyric_acid: {
+                    name: "GABA",
+                    system: "Inhibitory Amino Acid Neurotransmitter",
+                    formula: "C4H9NO2",
+                    function: "Primary inhibitory neurotransmitter in the central nervous system; dampens neuronal excitability.",
+                    deficiency: "Anxiety disorders, seizure susceptibility, insomnia, and muscle spasticity.",
+                    sources: "Endogenously synthesized from glutamate via glutamic acid decarboxylase.",
+                    disease: "Epilepsy (Generalized Seizures)",
+                    pathway: "Insufficient synaptic inhibition permits runaway synchronous electrical firing across cerebral neuronal networks.",
+                    mermaidCode: "graph TD\n    A[Synaptic GABA Deficit] --> B[Loss of Inhibitory Tone]\n    B --> C[Runaway Neuronal Hyper-Excitability]\n    C --> D[Generalized Tonic-Clonic Seizure]",
+                    drugs: "Lorazepam / Diazepam (Benzodiazepines)",
+                    drugAction: "Allosterically binds GABA-A receptors to increase chloride ion influx and hyperpolarize neurons."
+                },
+                glutamate: {
+                    name: "Glutamate",
+                    system: "Excitatory Amino Acid Neurotransmitter",
+                    formula: "C5H9NO4",
+                    function: "Primary excitatory neurotransmitter driving synaptic plasticity, learning, and memory formation.",
+                    deficiency: "Impaired cognitive function, memory deficits, and lethargy.",
+                    sources: "Endogenously synthesized from glucose and glutamine in neural astrocytes.",
+                    disease: "Amyotrophic Lateral Sclerosis (ALS)",
+                    pathway: "Excess synaptic glutamate accumulation causes excitotoxic calcium influx, leading to motor neuron degeneration.",
+                    mermaidCode: "graph TD\n    A[Excess Synaptic Glutamate] --> B[Overactivation of NMDA Receptors]\n    B --> C[Toxic Intracellular Calcium Influx]\n    C --> D[Motor Neuron Death & Paralysis]",
+                    drugs: "Riluzole",
+                    drugAction: "Reduces presynaptic glutamate release and blocks postsynaptic excitotoxic signaling pathways."
+                },
+                bilirubin: {
+                    name: "Bilirubin",
+                    system: "Tetrapyrrolic Bile Pigment",
+                    formula: "C33H36N4O6",
+                    function: "End-product of heme catabolism; functions as a cellular antioxidant at low physiological concentrations.",
+                    deficiency: "Not clinically deficient; excess causes clinical jaundice and tissue toxicity.",
+                    sources: "Derived from the breakdown of senescent erythrocytes in the reticuloendothelial system.",
+                    disease: "Neonatal Jaundice & Kernicterus",
+                    pathway: "Immature hepatic glucuronyl transferase fails to conjugate unconjugated bilirubin, causing lipid-soluble accumulation in the brain.",
+                    mermaidCode: "graph TD\n    A[Impaired Hepatic Conjugation] --> B[Unconjugated Bilirubin Accumulation]\n    B --> C[Crossing of Blood-Brain Barrier]\n    C --> D[Basal Ganglia Toxicity (Kernicterus)]",
+                    drugs: "Phototherapy (Blue-Green Spectrum)",
+                    drugAction: "Photo-isomerizes unconjugated bilirubin into water-soluble lumirubin for rapid biliary excretion."
+                }
+            }
+        };
+
+        const presetQuestions = [
+            { q: "What organelle produces energy and how", a: "The Mitochondria synthesize Adenosine Triphosphate via oxidative phosphorylation and the Krebs Cycle inside the inner mitochondrial membrane." },
+            { q: "What happens when hemoglobin lacks iron", a: "Anemia occurs, reducing systemic oxygen delivery which causes severe fatigue, pale skin, and poor metabolic output." },
+            { q: "How do the kidneys regulate blood pressure", a: "The Kidneys release Renin, triggering the RAAS pathway to increase sodium/water retention and raise blood pressure." },
+            { q: "What is the biological function of Vitamin D3", a: "Vitamin D3 increases intestinal calcium and phosphate absorption, supports bone mineralization, and modulates immunity." },
+            { q: "Why is the liver called the metabolic center", a: "The liver performs 500+ tasks: detoxification, glycogen storage, gluconeogenesis, bile production, and plasma protein synthesis." },
+            { q: "What role does rough ER play in ribosomes", a: "Rough ER is studded with ribosomes that synthesize polypeptide chains directly into the ER lumen for folding and routing." },
+            { q: "Which vitamin deficiency causes scurvy", a: "Vitamin C (Ascorbic acid) deficiency halts collagen synthesis, causing scurvy with fragile blood vessels and bleeding gums." },
+            { q: "What triggers cellular suicide", a: "Lysosomes release digestive enzymes and mitochondria release cytochrome c into the cytosol, activating apoptotic disassembly." },
+            { q: "How does insulin affect glucose metabolism", a: "Insulin binds receptors on cells, triggering glucose transporter translocation to the membrane for cellular respiration." },
+            { q: "What happens during a Vitamin K deficiency", a: "A lack of Vitamin K prevents hepatic carboxylation of clotting factors, causing easy bruising and prolonged bleeding." },
+            {
+                q: "What organelle produces energy and how",
+                a: "The Mitochondria synthesize Adenosine Triphosphate via the electron transport chain oxidative phosphorylation and the Krebs Cycle inside the inner mitochondrial membrane converting oxygen and glucose bi products into high energy phosphate bonds"
+            },
+            {
+                q: "What happens when hemoglobin lacks iron",
+                a: "If Hemoglobin lacks iron it cannot efficiently bind molecular oxygen This results in Anemia reducing systemic oxygen delivery which causes severe fatigue pale skin and poor metabolic output"
+            },
+            {
+                q: "How do the kidneys regulate blood pressure",
+                a: "The Kidneys release the enzyme Renin in response to low blood pressure triggering the Renin Angiotensin Aldosterone System which stimulates sodium and water absorption to increase blood volume and pressure"
+            },
+            {
+                q: "What is the biological function of Vitamin D three",
+                a: "Vitamin D three acts as a hormone that directly increases the intestinal absorption of calcium and phosphate It regulates bone mineralization preventing Rickets or Osteoporosis and modulates immune signaling"
+            },
+            {
+                q: "Why is the liver called the metabolic center",
+                a: "The Liver performs over five hundred metabolic tasks including detoxification of metabolic waste regulation of blood sugar levels glycogen storage and gluconeogenesis bile production and plasma protein synthesis"
+            },
+            {
+                q: "What role does rough ER play in ribosomes",
+                a: "The Rough Endoplasmic Reticulum is physically studded with Ribosomes Ribosomes synthesize polypeptide chains directly into the endoplasmic reticulum where the proteins are folded modified and escorted to the Golgi"
+            },
+            {
+                q: "Which vitamin deficiency causes scurvy",
+                a: "A deficiency in Vitamin C Ascorbic Acid halts the synthesis of collagen fibers This causes Scurvy characterized by fragile blood vessels bleeding gums and joint pain"
+            },
+            {
+                q: "What triggers cellular suicide",
+                a: "The Lysosomes release digestive enzymes and Mitochondria release Cytochrome C into the cytosol during severe stress activating enzymes that systematically disassemble cell structures"
+            },
+            {
+                q: "How does insulin affect glucose metabolism",
+                a: "Produced in the Pancreas insulin binds to receptors on muscle and fat cells to trigger translocation of transporters to the cell membrane allowing glucose entry for cellular respiration"
+            },
+            {
+                q: "Why is Vitamin B twelve crucial for nerve function",
+                a: "Vitamin B twelve is a crucial co factor for myelin creation Deficiency impairs fatty acid synthesis needed to maintain the myelin sheath surrounding nerve axons leading to progressive neuropathy"
+            },
+            {
+                q: "What causes night blindness in humans",
+                a: "Night blindness is caused by a deficiency in Vitamin A which prevents the synthesis of rhodopsin inside the rods of the retina needed for low light vision"
+            },
+            {
+                q: "What is the main function of the spleen",
+                a: "The spleen acts as a blood filter that recycles iron from old red blood cells and maintains a reservoir of white blood cells to defend against systemic pathogens"
+            },
+            {
+                q: "How does the stomach protect itself from acid",
+                a: "The stomach produces a thick layer of alkaline mucus that neutralizes the highly acidic hydrochloric juices keeping them from digesting the stomach tissue itself"
+            },
+            {
+                q: "What is the role of Vitamin K in the body",
+                a: "Vitamin K is a vital co factor for clotting proteins in the liver Synthesizing these enzymes allows the blood to coagulate properly and prevent internal bleeding"
+            },
+            {
+                q: "How does the body store excess glucose",
+                a: "The liver and muscle tissues bind excess glucose molecules together into a dense storage polymer called glycogen which can be broken down later for quick energy"
+            },
+            {
+                q: "What is the main purpose of ribosomal RNA",
+                a: "Ribosomal RNA forms the physical structural matrix of the ribosome where it coordinates the reading of messenger templates and binds amino acids together"
+            },
+            {
+                q: "How do the lungs remove carbon dioxide",
+                a: "Carbon dioxide dissolved in blood diffuses down its concentration gradient across the thin alveolar membranes into the lungs where it is expelled during exhalation"
+            },
+            {
+                q: "What cellular process occurs in the nucleolus",
+                a: "The nucleolus is the specialized site inside the nucleus where ribosomal RNA is transcribed and assembled with proteins to create ribosomal subunits"
+            },
+            {
+                q: "What happens during a Vitamin E deficiency",
+                a: "A lack of Vitamin E allows free radicals to damage cell membranes which destroys red blood cells and leads to hemolytic anemia and sensory nerve degradation"
+            },
+            {
+                q: "How does the pancreas aid in digestion",
+                a: "The pancreas secretes digestive enzymes such as lipase amylase and protease directly into the small intestine to break down fats starches and proteins"
+            },
+            {
+                q: "What is the primary role of the smooth ER",
+                a: "The smooth endoplasmic reticulum is responsible for synthesizing structural lipids and steroid hormones as well as detoxifying chemical waste products and drugs"
+            },
+            {
+                q: "Why is water called the universal solvent",
+                a: "Water is highly polar which allows it to surround and dissolve ionic substances and biological molecules facilitating chemical reactions and transportation within the body"
+            },
+            {
+                q: "What are the symptoms of thyroid hormone deficiency",
+                a: "A deficiency in thyroid hormones leads to hypothyroidism characterized by extreme fatigue slow heart rate unexplained weight gain and sensitivity to cold temperatures"
+            },
+            {
+                q: "How does DNA direct protein synthesis",
+                a: "DNA genes are transcribed into messenger RNA molecules which exit the nucleus and travel to ribosomes where they serve as templates to arrange amino acids"
+            },
+            {
+                q: "What structural adaptation helps the small intestine absorb nutrients",
+                a: "The interior lining is covered in finger like folds called villi and microvilli which vastly expand the surface area to maximize contact with digested food"
+            },
+            {
+                q: "Why does the brain require constant glucose",
+                a: "Neurons have high metabolic demands but cannot store energy meaning they rely on a continuous supply of blood glucose to generate cellular energy and function"
+            },
+            {
+                q: "What digestive enzyme breaks down proteins in the stomach",
+                a: "Pepsin is the primary gastric enzyme that breaks down complex dietary protein chains into smaller peptide fragments under highly acidic conditions"
+            },
+            {
+                q: "How do lysosomes destroy foreign bacteria",
+                a: "White blood cells engulf bacteria and fuse them with lysosomes where intense acid hydrolase enzymes digest and destroy the bacterial structures"
+            },
+            {
+                q: "What is the consequence of severe dehydration",
+                a: "Dehydration reduces total blood volume which lowers pressure and forces the heart to beat faster potentially causing kidney failure systemic shock and confusion"
+            },
+            {
+                q: "How does the Golgi apparatus ship proteins",
+                a: "The Golgi wraps processed proteins inside small membrane bubbles called vesicles which pinch off and migrate to their target organelles or fuse with the cell membrane"
+            },
+            // NEW 50 ADDITIONAL QUESTIONS (31 to 80)
+            {
+                q: "What is the function of the rough ER",
+                a: "The rough endoplasmic reticulum folds and processes proteins synthesized by its attached ribosomes before routing them to other destinations"
+            },
+            {
+                q: "What happens during a Vitamin K deficiency",
+                a: "A lack of Vitamin K prevents the proper synthesis of clotting proteins in the liver causing easy bruising and prolonged bleeding times"
+            },
+            {
+                q: "Why is the nucleus called the command center",
+                a: "The nucleus houses the genetic blueprint of deoxyribonucleic acid and controls all cellular growth metabolism protein synthesis and replication"
+            },
+            {
+                q: "How does the heart muscle receive oxygen",
+                a: "The heart muscle receives oxygenated blood directly through the coronary arteries branching off the main ascending aorta"
+            },
+            {
+                q: "What is the main function of salivary amylase",
+                a: "Salivary amylase is an enzyme secreted in the mouth that initiates the chemical digestion of complex starches into simpler sugars"
+            },
+            {
+                q: "What causes a high concentration of lactic acid",
+                a: "Lactic acid builds up when muscles undergo intense anaerobic respiration using glucose for energy in the absence of sufficient oxygen"
+            },
+            {
+                q: "How does the thyroid gland affect body temperature",
+                a: "The thyroid releases hormones that stimulate cellular respiration and metabolic activity throughout the body releasing heat as a bi product"
+            },
+            {
+                q: "What is the primary role of the large intestine",
+                a: "The large intestine absorbs remaining water and mineral salts from digested material compacting waste and housing beneficial gut bacteria"
+            },
+            {
+                q: "How do white blood cells reach infected tissues",
+                a: "White blood cells squeeze through tiny gaps in capillary walls in a process called diapedesis to attack local pathogens"
+            },
+            {
+                q: "What is the consequence of a low platelet count",
+                a: "A low platelet count reduces the ability of blood to clot which can lead to excessive bleeding from minor cuts and internal bruising"
+            },
+            {
+                q: "Why is ATP called the energy currency",
+                a: "Adenosine triphosphate stores chemical energy in high energy bonds that can be broken instantly to power active cellular processes"
+            },
+            {
+                q: "What is the role of the gall bladder",
+                a: "The gall bladder stores and concentrates bile produced by the liver releasing it into the small intestine to digest dietary fats"
+            },
+            {
+                q: "How does the skin synthesize Vitamin D",
+                a: "The skin utilizes ultraviolet B radiation from sunlight to convert cholesterol derivatives into active cholecalciferol"
+            },
+            {
+                q: "What causes the sound of a heartbeat",
+                a: "The heart sounds are caused by the sequential closure of the atrioventricular valves followed by the semilunar valves during contraction"
+            },
+            {
+                q: "What is the main function of lysosomes",
+                a: "Lysosomes contain acidic hydrolytic enzymes that digest cellular waste worn out organelles and foreign bacteria"
+            },
+            {
+                q: "How does insulin lower blood sugar",
+                a: "Insulin signals cells to insert glucose transporters into their membranes allowing glucose to move from blood into tissues"
+            },
+            {
+                q: "What happens when the body lacks Vitamin B twelve",
+                a: "A deficiency in Vitamin B twelve leads to faulty DNA synthesis causing megaloblastic anemia and progressive damage to the nervous system"
+            },
+            {
+                q: "What is the function of the ribosome",
+                a: "Ribosomes act as translation machines that read messenger RNA templates to assemble amino acids into functional proteins"
+            },
+            {
+                q: "How do the lungs stay inflated",
+                a: "The lungs are held open by a negative pleural pressure and a lipid protein mixture called surfactant that reduces alveolar tension"
+            },
+            {
+                q: "What is the role of memory cells in immunity",
+                a: "Memory cells remain in circulation after an infection recognizing the same pathogen quickly to launch a rapid defense during reinfection"
+            },
+            {
+                q: "Why does carbon monoxide cause suffocation",
+                a: "Carbon monoxide binds tightly to hemoglobin at the oxygen site preventing the protein from releasing oxygen to tissues"
+            },
+            {
+                q: "What is the purpose of the myelin sheath",
+                a: "The lipid rich myelin sheath wraps around nerve axons to insulate them and drastically speed up the transmission of electrical impulses"
+            },
+            {
+                q: "How does the pancreas regulate high blood sugar",
+                a: "The pancreas senses high blood sugar and secretes insulin from beta cells to promote glucose absorption and storage"
+            },
+            {
+                q: "What is the function of transfer RNA",
+                a: "Transfer RNA molecules carry specific amino acids to the ribosome matching them with the correct genetic codes on messenger RNA"
+            },
+            {
+                q: "What happens during liver failure",
+                a: "Liver failure results in toxic ammonia buildup loss of blood clotting proteins failure to digest fats and generalized jaundice"
+            },
+            {
+                q: "What is the role of hydrochloric acid in digestion",
+                a: "Hydrochloric acid provides the highly acidic environment required to denature proteins and activate the digestive enzyme pepsin"
+            },
+            {
+                q: "Why is dietary fiber important for the colon",
+                a: "Dietary fiber adds bulk to digestive waste facilitating peristalsis and serves as a primary food source for healthy gut microbes"
+            },
+            {
+                q: "What is the function of the microvilli",
+                a: "Microvilli are tiny projections on intestinal cells that vastly expand surface area to maximize the rate of nutrient absorption"
+            },
+            {
+                q: "How does adrenaline affect the cardiovascular system",
+                a: "Adrenaline binds to cardiac receptors causing the heart to beat faster and harder while redirecting blood flow to major skeletal muscles"
+            },
+            {
+                q: "What causes muscle fatigue during exercise",
+                a: "Muscle fatigue is driven by glycogen depletion lactic acid accumulation and the buildup of phosphate ions that interfere with contractions"
+            },
+            {
+                q: "What is the role of the nuclear envelope",
+                a: "The double membrane nuclear envelope encloses the genetic material regulating macromolecule transport through nuclear pores"
+            },
+            {
+                q: "How do red blood cells survive without a nucleus",
+                a: "Red blood cells lack a nucleus to maximize oxygen carrying capacity meaning they cannot replicate and survive for only about one hundred twenty days"
+            },
+            {
+                q: "What is the primary function of the cerebellum",
+                a: "The cerebellum coordinates complex motor movements balance posture and motor learning to ensure smooth muscle action"
+            },
+            {
+                q: "What happens during a Vitamin C deficiency",
+                a: "Without Vitamin C the enzyme that stabilizes collagen cannot function leading to weakened blood vessels joint pain and scurvy"
+            },
+            {
+                q: "How does aldosterone regulate blood pressure",
+                a: "Aldosterone stimulates the kidneys to reabsorb sodium and excrete potassium which draws water back into blood vessels increasing pressure"
+            },
+            {
+                q: "What is the function of the smooth ER in liver cells",
+                a: "The smooth endoplasmic reticulum in liver cells contains enzymes that detoxify drugs alcohol and cellular metabolic waste products"
+            },
+            {
+                q: "How does the body respond to low oxygen levels",
+                a: "The kidneys sense low oxygen and release erythropoietin which stimulates bone marrow to produce more oxygen carrying red blood cells"
+            },
+            {
+                q: "What is the role of the active site in enzymes",
+                a: "The active site is a uniquely shaped pocket on an enzyme where substrate molecules bind and undergo rapid chemical conversion"
+            },
+            {
+                q: "Why is active transport different from diffusion",
+                a: "Active transport requires cellular energy in the form of ATP to pump molecules against their natural concentration gradient"
+            },
+            {
+                q: "What causes a growth hormone deficiency",
+                a: "A growth hormone deficiency is caused by dysfunction in the anterior pituitary gland leading to reduced bone and tissue development"
+            },
+            {
+                q: "What is the primary function of DNA polymerase",
+                a: "DNA polymerase is the enzyme responsible for assembling new nucleotides onto a template strand during cellular replication"
+            },
+            {
+                q: "How does the immune system recognize self cells",
+                a: "Immune cells recognize specialized major histocompatibility complex proteins on cell surfaces to identify them as part of the body"
+            },
+            {
+                q: "What is the role of bile in digestion",
+                a: "Bile acts as a surfactant that emulsifies large dietary fat droplets into tiny micelles allowing lipase enzymes to digest them easily"
+            },
+            {
+                q: "How does the brain monitor blood oxygen levels",
+                a: "Specialized chemical sensors in the carotid arteries and aorta monitor oxygen acidity and carbon dioxide to adjust breathing rates"
+            },
+            {
+                q: "What is the function of the cytoskeleton",
+                a: "The cytoskeleton is a dynamic network of protein fibers that maintains cell shape facilitates internal transport and drives cell division"
+            },
+            {
+                q: "What causes pernicious anemia",
+                a: "Pernicious anemia occurs when an autoimmune reaction destroys cells in the stomach preventing the absorption of Vitamin B twelve"
+            },
+            {
+                q: "What is the role of calcitonin in bone health",
+                a: "Calcitonin is a hormone that lowers blood calcium levels by inhibiting bone breakdown and promoting calcium storage in bones"
+            },
+            {
+                q: "How do ribosomes initiate translation",
+                a: "Ribosomal subunits bind to a specific start signal on a messenger RNA strand and recruit the initial transfer RNA molecule"
+            },
+            {
+                q: "What is the primary danger of high fever",
+                a: "An extremely high fever can denature vital metabolic enzymes causing them to lose their structure and cease catalytic function"
+            },
+            {
+                q: "How does the spleen assist the immune system",
+                a: "The spleen acts as a specialized filter where immune cells interact with bloodborne pathogens to launch an adaptive response"
+            },
+            { q: "What happens to brain glucose metabolism during prolonged cerebral hypoxia?",
+              a: "Cerebral hypoxia shifts metabolism from oxidative phosphorylation to anaerobic glycolysis, causing rapid accumulation of lactic acid, intracellular acidosis, and acute ATP depletion." },
+            { q: "How does T3/T4 synthesis change in the presence of chronic selenium deficiency?", 
+              a: "Selenium is essential for deiodinase enzymes. Chronic deficiency stops the peripheral conversion of T4 to the active T3 hormone, mimicking severe hypothyroidism." },
+            { q: "Explain the mechanism behind respiratory acidosis during alveolar hypoventilation.", 
+              a: "Hypoventilation decreases carbon dioxide clearance from alveolar units, increasing blood pCO2. This drives the carbonic anhydrase equilibrium toward carbonic acid dissociation into free protons, dropping blood pH." },
+            { q: "What are the structural consequences of acute myocardial ischemia on cardiac ATP levels?", 
+              a: "Myocardial ischemia stops oxygen supply to coronary loops, shutting down the mitochondrial electron transport chain. ATP production plunges over ninety percent within minutes, triggering contractility loss and ischemic necrosis." },
+            { q: "Describe the pathogenetic cascade of hepatic encephalopathy due to hyperammonemia.",
+              a: "When liver refinement fails, ammonia bypasses detox. It crosses the blood-brain barrier where astrocytes convert it to glutamine. This exerts an osmotic pull, inducing swelling and intracranial pressure." },
+            { q: "How does a reduction in gastric parietal cell density cause macrocytic anemia?",
+              a: "Parietal cells secrete Intrinsic Factor. A drop in density leads to Intrinsic Factor failure, preventing the terminal ileum from absorbing Vitamin B12. This blocks red blood cell DNA replication, producing macrocytic erythrocytes." },
+            { q: "What is the primary cellular response of nephron podocytes to prolonged hypertension?", 
+              a: "Chronic high pressure alters podocyte architecture, inducing foot process effacement and slit diaphragm damage. This compromises the glomerular filtration barrier, leading to albuminuria and renal decline." },
+            { q: "Explain how dysbiosis in the small intestine impairs the absorption of dietary lipids.", 
+              a: "Bacterial overgrowth causes premature deconjugation of bile salts. Deconjugated bile salts cannot form organized lipid micelles, causing fat malabsorption and steatorrhea." },
+            { q: "What occurs within the pancreatic Islets of Langerhans during chronic insulin resistance?", a: "Beta-cells initially undergo hyperplasia and hypertrophy to hypersecrete insulin. Over time, high metabolic demands lead to endoplasmic reticulum stress, amyloid deposition, and cell apoptosis." },
+            { q: "How does a splenectomy affect systemic vulnerability to encapsulated bacteria?",
+              a: "The spleen houses white pulp macrophages that clear opsonized microbes. Without it, clearance drops, predisposing the system to overwhelming infections by organisms like Streptococcus pneumoniae." },
+            { q: "What is the consequence of nuclear envelope lamina mutation on genomic stability?", 
+              a: "Mutations in lamin proteins disrupt nuclear structural integrity, altering chromatin layout. This triggers DNA double-strand breaks, aberrant transcription, and premature senescence." },
+            { q: "How does structural damage to the inner mitochondrial membrane induce apoptotic pathways?", a: "Damage causes mitochondrial permeability transition pore opening. This collapses the proton gradient, stopping ATP synthesis and releasing Cytochrome c into the cytosol to activate caspase enzymes." },
+            { q: "Describe the molecular pathway of ribosomopathy in Diamond-Blackfan anemia.", 
+              a: "Mutations in ribosomal proteins cause ribosomal assembly failure. This triggers p53-mediated checkpoint activation, leading to selective apoptosis of erythroid progenitor cells in bone marrow." },
+            { q: "How does chronic endoplasmic reticulum stress initiate the Unfolded Protein Response (UPR)?", 
+              a: "Accumulation of misfolded proteins titrates BiP chaperones away from sensor proteins (PERK, IRE1, ATF6). This activates signaling cascades that halt translation and upregulate folding machinery." },
+            { q: "What is the cellular impact of congenital glycosylation defects within the Golgi apparatus?", 
+              a: "Golgi processing defects disrupt sugar chain trimming and tagging on proteins and lipids. This causes widespread sorting failures, structural instability, and multiorgan transport defects." },
+            { q: "Explain why acid hydrolase leakage from lysosomes fails to digest healthy cytoplasm under normal pH.", 
+              a: "Acid hydrolases require an acidic environment (~pH 5.0) maintained by proton pumps. Normal cytoplasm sits at pH 7.2, which denatures and deactivates these enzymes upon leakage." },
+            { q: "How does a lack of Vitamin A affect the structural conversion of corneal epithelial tissue?", 
+              a: "Vitamin A deficiency blocks retinoic acid receptor activation. This stops normal differentiation of mucus-secreting goblet cells, inducing squamous metaplasia and dry keratinized surfaces." },
+            { q: "Describe the role of Cobalamin in the conversion of homocysteine to methionine.",
+              a: "Vitamin B12 acts as an intermediate methyl carrier for methionine synthase. It accepts a methyl group from methyltetrahydrofolate and transfers it to homocysteine, converting it to methionine." },
+            { q: "What molecular mechanism drives the rapid degradation of ATP during intense muscle stress?", 
+              a: "Myosin ATPase cleaves the terminal phosphodiester bond of ATP, yielding ADP and inorganic phosphate. This releases energy to drive filament sliding." },
+            { q: "How do thymine dimers induced by UV radiation compromise structural DNA integrity?", 
+              a: "UV rays catalyze covalent bonds between adjacent pyrimidine bases, creating a bulky lesion. This distorts the double helix, blocking DNA polymerase and transcription machinery." },
+            { q: "What is the effect of severe hypokalemia on the resting membrane potential of cardiomyocytes?", 
+              a: "Low extracellular potassium increases the concentration gradient out of the cell, hyperpolarizing the resting membrane potential. This delays repolarization, predisposing the system to re-entrant arrhythmias." },
+            { q: "How does carbon monoxide poisoning disrupt the electron transport chain complex IV?", 
+              a: "Carbon monoxide binds ferrous iron in Cytochrome c Oxidase with higher affinity than oxygen, blocking electron transfer to oxygen and shutting down ATP synthesis." },
+            { q: "What metabolic pathway compensates for ATP production during acute glycogen storage disease?",
+              a: "When glycogenolysis is blocked, the system increases fatty acid beta-oxidation and amino acid-driven gluconeogenesis to maintain systemic glucose levels." },
+            { q: "Describe the physiological cascade of aldosterone hypersecretion on distal tubule transport.", a: "Aldosterone upregulates basolateral Na+/K+ ATPases and apical epithelial sodium channels (ENaC). This increases sodium reabsorption and drives potassium excretion into the filtrate." },
+            { q: "How does chronic alveolar hypoxia trigger the development of cor pulmonale?", 
+              a: "Alveolar hypoxia induces localized pulmonary vasoconstriction to optimize ventilation-perfusion matching. Chronic vasoconstriction raises pulmonary arterial pressure, causing right ventricular hypertrophy and failure." },
+            { q: "What is the impact of elevated bile acid concentrations on intestinal mucosal junctions?", a: "Excess un-micellized bile acids act as detergents, disrupting epithelial cell membranes and tight junctions. This increases intestinal permeability and causes secretory diarrhea." },
+            { q: "How does intrinsic factor deficiency affect spinal cord posterior column structure?", 
+              a: "The resulting Vitamin B12 deficiency blocks succinyl-CoA production, leading to abnormal fatty acid accumulation in neural lipids. This causes subacute combined degeneration of the posterior and lateral columns." },
+            { q: "What biochemical shift causes lactic acidosis during severe septic shock conditions?", 
+              a: "Shock decreases tissue perfusion, creating systemic hypoxia. Pyruvate from glycolysis cannot enter the oxygen-dependent TCA cycle and is instead reduced to lactate by lactate dehydrogenase." },
+            { q: "Describe the molecular structural alteration of hemoglobin under high partial pressure of CO2.", 
+              a: "High CO2 binds terminal amino groups on hemoglobin to form carbaminohemoglobin. This stabilizes the low-affinity T-state, shifting the oxygen dissociation curve to the right to unload oxygen." },
+            { q: "How do pancreatic enzymes become prematurely activated in acute necrotizing pancreatitis?", 
+              a: "Disrupted acinar trafficking causes lysosomal hydrolases to mix with zymogen granules. Cathepsin B activates trypsinogen to trypsin, which initiates a destructive autodigestive cascade." },
+            { q: "What is the primary role of the rough endoplasmic reticulum in plasma cell function?", 
+              a: "Plasma cells specialize in heavy antibody production. The rough ER provides an expansive membrane surface studded with ribosomes to translate and fold immunoglobulin chains." },
+            { q: "How does a loss of lysosomal alpha-glucosidase lead to Pompe disease pathology?", 
+              a: "The deficiency blocks glycogen breakdown within lysosomes, causing glycogen accumulation in cardiac and skeletal tissues. This disrupts sarcomere alignment and causes myofibrillar damage." },
+            { q: "What is the physiological role of Retinol binding protein (RBP) in metabolic transport?",
+              a: "Hydrophobic retinol cannot dissolve in blood plasma. RBP binds retinol in the liver and stabilizes it, facilitating transport through the bloodstream to peripheral target tissues." },
+            { q: "How does a prolonged absence of dietary iodine alter thyroid follicle morphology?",
+              a: "Low iodine drops T3/T4 synthesis, removing negative feedback on the pituitary gland. TSH hypersecretion triggers marked hypertrophy and hyperplasia of thyroid follicular cells." },
+            { q: "What structural defect occurs in mitochondrial DNA mutations like MELAS?",
+              a: "Mutations typically hit mitochondrial tRNA genes (e.g., tRNALeu), impairing translation of structural proteins across oxidative complexes and reducing respiration" }
+]
+        let currentCategory = 'organs';
+        let currentItemId = 'brain';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Trigger slow-motion loading bar animation
+            setTimeout(() => {
+                document.getElementById('intro-progress').style.width = '100%';
+            }, 200);
+
+            // Auto dismiss intro after 3 seconds or user can click
+            setTimeout(() => {
+                dismissIntro();
+            }, 3000);
+
+            switchCategory('organs');
+            loadPresetQuestions();
+        });
+
+        function dismissIntro() {
+            const overlay = document.getElementById('intro-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                overlay.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    overlay.remove();
+                }, 1500);
+            }
+        }
+
+        function switchVisual(visualType) {
+            document.getElementById('svg-organs').classList.add('hidden');
+            document.getElementById('svg-organelles').classList.add('hidden');
+            document.getElementById('svg-biochem').classList.add('hidden');
+
+            document.getElementById('btn-vis-organs').className = "px-2.5 py-1 text-xs font-bold rounded text-gray-400 hover:text-white transition-all";
+            document.getElementById('btn-vis-organelles').className = "px-2.5 py-1 text-xs font-bold rounded text-gray-400 hover:text-white transition-all";
+            document.getElementById('btn-vis-biochem').className = "px-2.5 py-1 text-xs font-bold rounded text-gray-400 hover:text-white transition-all";
+
+            if (visualType === 'organs') {
+                document.getElementById('svg-organs').classList.remove('hidden');
+                document.getElementById('btn-vis-organs').className = "px-2.5 py-1 text-xs font-bold rounded bg-sky-600 text-white transition-all";
+                document.getElementById('current-viewport-title').innerText = "Anatomical Organs";
+            } else if (visualType === 'organelles') {
+                document.getElementById('svg-organelles').classList.remove('hidden');
+                document.getElementById('btn-vis-organelles').className = "px-2.5 py-1 text-xs font-bold rounded bg-sky-600 text-white transition-all";
+                document.getElementById('current-viewport-title').innerText = "Micro Organelles";
+            } else if (visualType === 'biochem') {
+                document.getElementById('svg-biochem').classList.remove('hidden');
+                document.getElementById('btn-vis-biochem').className = "px-2.5 py-1 text-xs font-bold rounded bg-sky-600 text-white transition-all";
+                document.getElementById('current-viewport-title').innerText = "Vitamins & Molecules";
+            }
+        }
+
+        function switchCategory(catId) {
+            currentCategory = catId;
+            if (catId === 'organs') switchVisual('organs');
+            if (catId === 'organelles') switchVisual('organelles');
+            if (catId === 'vitamins' || catId === 'molecules') switchVisual('biochem');
+
+            ['organs', 'organelles', 'vitamins', 'molecules'].forEach(c => {
+                const btn = document.getElementById(`tab-${c}`);
+                if (c === catId) {
+                    btn.className = "py-3 text-[10px] font-bold tracking-wider text-sky-400 border-b-2 border-sky-500 bg-sky-950/20";
+                } else {
+                    btn.className = "py-3 text-[10px] font-bold tracking-wider text-gray-400 border-b-2 border-transparent hover:text-gray-200";
+                }
+            });
+
+            const listContainer = document.getElementById('item-list-container');
+            listContainer.innerHTML = '';
+
+            const keys = Object.keys(database[catId]);
+            keys.forEach((key, idx) => {
+                const item = database[catId][key];
+                const itemButton = document.createElement('button');
+                itemButton.id = `idx-${key}`;
+                itemButton.className = "w-full text-left px-3 py-2 rounded text-xs transition-all flex flex-col gap-1 border border-transparent hover:bg-gray-900";
+                itemButton.onclick = () => selectItem(key, catId);
+                itemButton.innerHTML = `
+                    <div class="flex justify-between items-center w-full">
+                        <span class="font-bold text-gray-300 uppercase truncate">${item.name}</span>
+                        <span class="text-[9px] text-gray-500 font-mono">#${idx+1}</span>
+                    </div>
+                `;
+                listContainer.appendChild(itemButton);
+            });
+
+            selectItem(keys[0], catId);
+        }
+
+        async function selectItem(key, category) {
+            currentItemId = key;
+            currentCategory = category;
+
+            document.querySelectorAll('#item-list-container button').forEach(btn => {
+                btn.className = "w-full text-left px-3 py-2 rounded text-xs transition-all flex flex-col gap-1 border border-transparent hover:bg-gray-900";
+            });
+
+            const activeBtn = document.getElementById(`idx-${key}`);
+            if (activeBtn) {
+                activeBtn.className = "w-full text-left px-3 py-2 rounded text-xs transition-all flex flex-col gap-1 bg-sky-950/40 border border-sky-800/80";
+            }
+
+            document.querySelectorAll('.glow-active').forEach(el => el.classList.remove('glow-active'));
+            const svgElement = document.getElementById(`svg-part-${key}`);
+            if (svgElement) svgElement.classList.add('glow-active');
+
+            const item = database[category][key];
+            const specPanel = document.getElementById('spec-panel');
+            specPanel.innerHTML = `
+                <div class="flex flex-col gap-4">
+                    <div class="border-b border-gray-900 pb-2 flex justify-between items-start">
+                        <div>
+                            <span class="text-[9px] tracking-widest text-sky-400 uppercase font-mono">${item.system}</span>
+                            <h2 class="text-xl font-black text-gray-100 uppercase tracking-wide mt-0.5">${item.name}</h2>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="exportReport('json')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-sky-400 rounded text-[9px] font-mono font-bold">JSON</button>
+                            <button onclick="exportReport('md')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-emerald-400 rounded text-[9px] font-mono font-bold">MD</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-0.5 bg-gray-950 p-2 rounded border border-gray-900">
+                        <span class="text-[8px] text-gray-500 font-mono uppercase">Formula / Capacity</span>
+                        <span class="text-xs font-mono text-emerald-400">${item.formula}</span>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Biological Function</h3>
+                        <p class="text-[11px] leading-relaxed text-gray-300 bg-gray-900/30 p-2.5 rounded border border-gray-900/60">${item.function}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Deficiency Pathology</h3>
+                        <p class="text-[11px] leading-relaxed text-red-300 bg-red-950/10 p-2.5 rounded border border-red-950/20">${item.deficiency}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-1">Associated Disease & Pathway</h3>
+                        <p class="text-[11px] font-bold text-amber-200 mb-1">${item.disease}</p>
+                        <p class="text-[11px] leading-relaxed text-gray-300 bg-amber-950/10 p-2.5 rounded border border-amber-900/30 mb-2">${item.pathway}</p>
+                        <div class="bg-gray-900 p-2 rounded border border-gray-800 overflow-x-auto">
+                            <div class="mermaid">${item.mermaidCode}</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Pharmacotherapy & Drug Mechanism</h3>
+                        <p class="text-[11px] font-bold text-emerald-200 mb-1">${item.drugs}</p>
+                        <p class="text-[11px] leading-relaxed text-gray-300 bg-emerald-950/10 p-2.5 rounded border border-emerald-900/30">${item.drugAction}</p>
+                    </div>
+                </div>
+            `;
+            try {
+                await mermaid.run();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function runLabDiagnostic() {
+            const glucose = parseFloat(document.getElementById('lab-glucose').value);
+            const creatinine = parseFloat(document.getElementById('lab-creatinine').value);
+            const output = document.getElementById('lab-result-output');
+            output.classList.remove('hidden');
+
+            let remarks = [];
+            if (glucose > 125) remarks.push("Hyperglycemia risk (Diabetes/Pancreas)");
+            else if (glucose < 70) remarks.push("Hypoglycemia risk");
+            else remarks.push("Glucose normal (70-125 mg/dL)");
+
+            if (creatinine > 1.2) remarks.push("Elevated Creatinine (Kidney stress)");
+            else remarks.push("Creatinine normal (0.6-1.2 mg/dL)");
+
+            output.innerHTML = `<strong>Diagnostic Evaluation:</strong><br>` + remarks.join('<br>');
+        }
+
+        function exportReport(format) {
+            const item = database[currentCategory][currentItemId];
+            if (format === 'json') {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(item, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `${currentItemId}_clinical_profile.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            } else if (format === 'md') {
+                const mdContent = `# Clinical Profile: ${item.name}\n\n**System:** ${item.system}\n**Formula:** ${item.formula}\n\n## Function\n${item.function}\n\n## Deficiency\n${item.deficiency}\n\n## Disease & Pathway\n**${item.disease}**\n${item.pathway}\n\n## Pharmacotherapy\n**${item.drugs}**\n${item.drugAction}`;
+                const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = url;
+                downloadAnchor.download = `${currentItemId}_clinical_profile.md`;
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            }
+        }
+
+        function handleGlobalSearch(val) {
+            const resultsBox = document.getElementById('global-search-results');
+            const query = val.trim().toLowerCase();
+            if (!query) {
+                resultsBox.classList.add('hidden');
+                resultsBox.innerHTML = '';
+                return;
+            }
+
+            let matches = [];
+            for (let cat in database) {
+                for (let key in database[cat]) {
+                    const obj = database[cat][key];
+                    if (obj.name.toLowerCase().includes(query) || obj.disease.toLowerCase().includes(query) || obj.drugs.toLowerCase().includes(query)) {
+                        matches.push({ key, cat, name: obj.name, sys: obj.system });
+                    }
+                }
+            }
+
+            if (matches.length > 0) {
+                resultsBox.classList.remove('hidden');
+                resultsBox.innerHTML = matches.map(m => `
+                    <div onclick="selectItem('${m.key}', '${m.cat}'); document.getElementById('global-search-results').classList.add('hidden'); document.getElementById('global-search-input').value='';" class="p-2 hover:bg-gray-800 cursor-pointer border-b border-gray-800 text-xs">
+                        <span class="font-bold text-sky-400 block">${m.name}</span>
+                        <span class="text-[9px] text-gray-400 font-mono">${m.cat.toUpperCase()} - ${m.sys}</span>
+                    </div>
+                `).join('');
+            } else {
+                resultsBox.classList.remove('hidden');
+                resultsBox.innerHTML = `<div class="p-2 text-xs text-gray-500 font-mono">No clinical matches found</div>`;
+            }
+        }
+
+        function loadPresetQuestions() {
+            const container = document.getElementById('questions-container');
+            presetQuestions.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-gray-900 hover:bg-sky-950/30 text-gray-300 hover:text-sky-300 px-3 py-2 rounded text-[11px] leading-snug transition-all border border-gray-800 flex shrink-0 items-start gap-1.5";
+                btn.innerHTML = `<span class="text-sky-500 font-mono font-bold">${index + 1}</span> <span class="flex-1">${item.q}</span>`;
+                btn.onclick = () => triggerAnswer(item.q, item.a);
+                container.appendChild(btn);
+            });
+        }
+
+        function postChatMessage(sender, text, isUser = false) {
+            const feed = document.getElementById('chat-feed');
+            const messageEl = document.createElement('div');
+            if (isUser) {
+                messageEl.className = "flex flex-col gap-1 bg-gray-900 p-2.5 rounded-lg text-xs self-end max-w-[90%]";
+                messageEl.innerHTML = `<span class="font-mono font-bold text-gray-400 uppercase text-[9px] self-end">USER</span><p class="text-gray-300 leading-relaxed text-right">${text}</p>`;
+            } else {
+                messageEl.className = "flex flex-col gap-1 bg-sky-950/20 border border-sky-900/30 p-2.5 rounded-lg text-xs max-w-[90%]";
+                messageEl.innerHTML = `<span class="font-mono font-bold text-sky-400 uppercase text-[9px]">${sender}</span><p class="text-gray-200 leading-relaxed">${text}</p>`;
+            }
+            feed.appendChild(messageEl);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function triggerAnswer(question, answer) {
+            postChatMessage("USER", question, true);
+            setTimeout(() => postChatMessage("BIOCENTRIC AI", answer, false), 300);
+        }
+
+        function handleCustomQuery(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim().toLowerCase();
+            if (!query) return;
+
+            postChatMessage("USER", input.value, true);
+            input.value = '';
+
+            setTimeout(() => {
+                let foundMatch = false;
+                let reply = "";
+                for (let category in database) {
+                    for (let key in database[category]) {
+                        const item = database[category][key];
+                        if (query.includes(key) || query.includes(item.name.toLowerCase()) || (item.disease && query.includes(item.disease.toLowerCase()))) {
+                            reply = `Diagnostic analysis on ${item.name} (${item.system}): Disease is ${item.disease}. Pathway: ${item.pathway} Treatment: ${item.drugs} (${item.drugAction})`;
+                            foundMatch = true;
+                            selectItem(key, category);
+                            break;
+                        }
+                    }
+                    if (foundMatch) break;
+                }
+
+                if (!foundMatch) {
+                    for (let item of presetQuestions) {
+                        if (query.includes(item.q.toLowerCase().split(' ')[0])) {
+                            reply = item.a;
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!foundMatch) {
+                    reply = "Biological target unrecognized. Try searching terms like brain, heart, mitochondria, Vitamin C, or diabetes.";
+                }
+                postChatMessage("BIOCENTRIC AI", reply, false);
+            }, 400);
+        }
+    </script>
+</body>
+</html>
